@@ -184,7 +184,7 @@ namespace lbm_pacs
             f0[scalar_index(x,y)]    = omtauinv*ft[0] + w_tau_rho[0]*(omusq);
             
             for(unsigned int i = 1; i<9; ++i){
-              f1[field_index(x,y,i)] = omtauinv*ft[i] +
+              f2[field_index(x,y,i)] = omtauinv*ft[i] +
                                       w_tau_rho[i]*(omusq + (coeff[i][0]*tu + coeff[i][1]*tv)*(1.0+0.5*(coeff[i][0]*tu + coeff[i][1]*tv)));
             }
         }
