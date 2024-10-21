@@ -14,12 +14,12 @@ enum class NodeType
 class Node:
 {
   public:
-    Node(NodeType node_type_, std::vector<int> coord_,
+    Node(NodeType node_type_, std::vector<unsigned int> coord_,
         double ux_, double uy_, double rho_);
     ~Node();
 
-    void set_boundary_node_dir(std::vector<bool> boundary_node_dir_);
-    //TODO: in lattice populate_boundary_node_dir();
+    
+    
 
     void init();
     void load_adjacent_velocity_distributions(const Lattice &lattice);
@@ -31,16 +31,17 @@ class Node:
 
 
 
-    // Getters and Setters
+    // Getters 
 
-    inline const double get_f(int i) { return f[i]; };
+    inline double get_f(int i) const { return f[i]; }
+
+    // Setters
+    inline void set_boundary_node_dir(std::vector<bool> boundary_node_dir_) { boundary_node_dir = boundary_node_dir_; }
 
 
 
 
     // Static memebers
-    // 
-
     static int dim  = 2;
     static int dir = 9;
     static std::vector<double> weights = {4./9.,
@@ -69,8 +70,8 @@ class Node:
 
     // node informations
     NodeType node_type;
-    std::vector<bool> boundary_node_dir{8, false}; // in which directions bounce back will be applied (if is a boundary node)
-    std::vector<int> coord;
+    std::vector<bool> boundary_node_dir{dir, false}; // in which directions bounce back will be applied (if is a boundary node)
+    std::vector<unsigned int> coord;
 
 
 }

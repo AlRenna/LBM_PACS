@@ -1,6 +1,6 @@
 #include "node.hpp"
 
-Node::Node(NodeType node_type_, std::vector<int> coord_,
+Node::Node(NodeType node_type_, std::vector<unsigned int> coord_,
         double ux_, double uy_, double rho_)
   : node_type(node_type_),
     coord(coord_),
@@ -30,10 +30,10 @@ Node::init()
 
 Node::load_adjacent_velocity_distributions(const Lattice &lattice)
 {
-  nx = lattice.get_nx();
-  ny = lattice.get_ny();
-  x = coord[0];
-  y = coord[1];
+  unsigned int nx = lattice.get_nx();
+  unsigned int ny = lattice.get_ny();
+  unsigned int x = coord[0];
+  unsigned int y = coord[1];
 
   unsigned int x_dx = (x+1)%nx;
   unsigned int y_down = (y+1)%ny;
@@ -47,7 +47,8 @@ Node::load_adjacent_velocity_distributions(const Lattice &lattice)
   
   f_adj[0] = f[0];
 
-  // load populations from adjacent nodes  
+  // load populations from adjacent nodes
+  // TODO: check indices
   f_adj[1] = lattice.get_node(x_sx, y     ).get_f(1);
   f_adj[2] = lattice.get_node(x,    y_up  ).get_f(2);
   f_adj[3] = lattice.get_node(x_dx, y     ).get_f(3);
