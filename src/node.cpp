@@ -1,3 +1,10 @@
+/**
+ * @file
+ *
+ * @author Alessandro Renna <alessandro1.renna@mail.polimi.it>
+ * @author Mattia Marzotto <mattia.marzotto@mail.polimi.it>
+ */
+
 #include "node.hpp"
 
 Node::Node(NodeType node_type_, std::vector<unsigned int> coord_,

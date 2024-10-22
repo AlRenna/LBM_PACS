@@ -1,0 +1,13 @@
+# Visual Studio code.
+*.vscode*
+
+# Doxygen and LaTeX.
+docs/
+*html*
+*latex*
+*Doxyfile*
+*.tex*
+*.sty*
+*.dot*
+*.md5*
+

@@ -1,3 +1,10 @@
+/**
+ * @file
+ *
+ * @author Alessandro Renna <alessandro1.renna@mail.polimi.it>
+ * @author Mattia Marzotto <mattia.marzotto@mail.polimi.it>
+ */
+
 #include "lattice.hpp"
 
 Lattice::Lattice(unsigned int nx_, unsigned int ny_,
@@ -38,20 +45,23 @@ Lattice::populate_Nodes()
       unsigned int index = scalar_index(x, y);
       nodes[index] = Node(node_types[index], {x, y}, ux[index], uy[index], rho[index]);
       nodes[index].set_boundary_node_dir(boundary_node_dir[index]);
+      nodes[index].init();
     }
   }
 }
 
 Lattice::run()
 {
-  for(unsigned int y = 0; y<ny; ++y){
-    for(unsigned int x = 0; x<nx; ++x){
-      unsigned int index = scalar_index(x, y);
-      if(node_types[index] != NodeType::solid)
+  for(/*time loop*/)
+  {
+    for(unsigned int y = 0; y<ny; ++y)
+    {
+      for(unsigned int x = 0; x<nx; ++x)
       {
-        nodes[index].init();
-
-        for(/*time*/){
+        unsigned int index = scalar_index(x, y);
+        if(node_types[index] != NodeType::solid)
+        {
+          
           // TODO: check order of operations
           nodes[index].apply_bc(); // inlet e BCs (zou he)
           nodes[index].compute_physical_quantities();
@@ -61,6 +71,7 @@ Lattice::run()
           // nodes[index].compute_integrals();
           // nodes[index].save(*this);
 
+          
         }
       }
     }
