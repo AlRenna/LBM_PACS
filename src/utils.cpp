@@ -9,8 +9,8 @@ void run_command(const std::string& command) {
     }
 }
 
-void run_python(const std::vector<std::string> &commands){
-    const std::vector<std::string> commands_ = {"source env/bin/activate","python3 generate_lattice_RGB.py", "deactivate" };
+void run_python(){
+    const std::vector<std::string> commands_ = {"source env/bin/activate","python3 src/python_scripts/generate_lattice_RGB.py", "deactivate" };
     for (const auto &command : commands_){
         run_command(command);
     }
