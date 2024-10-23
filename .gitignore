@@ -15,4 +15,5 @@ docs/
 *env/
 *.csv*
 *.png*
+*.DS_Store*
 
