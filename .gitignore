@@ -11,3 +11,8 @@ docs/
 *.dot*
 *.md5*
 
+# Python.
+*env/
+*.csv*
+*.png*
+

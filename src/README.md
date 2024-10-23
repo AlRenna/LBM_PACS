@@ -9,3 +9,8 @@ numerics:
 - (Collisions schemes)
 - (Equilibrium distributions)
 - others
+
+Python requirements:
+- cv2
+- numpy
+- csv
