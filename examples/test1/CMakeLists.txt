@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 file(GLOB_RECURSE TEST1_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
 # Create an executable from the source files
-add_executable(Test1 ${TEST1_SOURCES})
+add_executable(test1 ${TEST1_SOURCES})
 
 # Link the executable with the main library
-target_link_libraries(Test1 LatticeLib)
+target_link_libraries(test1 LatticeLib)
