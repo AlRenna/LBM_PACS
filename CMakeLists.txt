@@ -1,23 +1,27 @@
 cmake_minimum_required(VERSION 3.10)
 
-# Set the project name
-project(LatticeSimulation)
+# Project name
+project(LatticeBoltzmann_PACS)
 
-# Set the C++ standard
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+# Function to add all subdirectories.
+function(add_all_subdirectories)
+    file(GLOB SUBDIRS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
+    foreach(subdir ${SUBDIRS})
+        if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
+            add_subdirectory(${subdir})
+        endif()
+    endforeach()
+endfunction()
 
-# Add the src directory to the include path
-include_directories(src)
+# Generate documentation.
+# add_subdirectory(${CMAKE_SOURCE_DIR}/doc/)
 
-# Find all .cpp and .hpp files in the src directory
-file(GLOB_RECURSE SRC_FILES src/*.cpp src/*.hpp)
+# Generate source code.
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/)
 
-# Find all .cpp files in the examples directory
-file(GLOB EXAMPLES_FILES examples/*.cpp)
+# Generate examples.
+add_subdirectory(${CMAKE_SOURCE_DIR}/examples/)
 
-# Add the executable
-add_executable(LatticeSimulation ${EXAMPLES_FILES} ${SRC_FILES})
+# Add python_scripts subdirectory
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/python_scripts)
 
-# Link libraries if needed (e.g., Python libraries)
-# target_link_libraries(LatticeSimulation <library_name>)

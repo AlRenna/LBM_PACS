@@ -26,9 +26,8 @@ segmentata, ci restituisca:
  * @brief Class to model the lattice for the resolution of the LB method.
  * 
  */
-class Lattice:
+class Lattice
 {
-
   public:
 
   /**
@@ -52,7 +51,7 @@ class Lattice:
    * @param node_types_ 
    * @param boundary_node_dir_ 
    */
-  void set_ICs_&_BCs(std::vector<double> ux_in_, 
+  void load_ICs_and_BCs(std::vector<double> ux_in_, 
                std::vector<double> uy_in_, 
                std::vector<double> rho_in_,
                std::vector<NodeType> node_types_,
@@ -81,7 +80,7 @@ class Lattice:
    * @param y 
    * @return size_t 
    */
-  inline size_t scalar_index(unsigned int x, unsigned int y)
+  inline size_t scalar_index(unsigned int x, unsigned int y) const
     {
       return nx*y+x;
     }
@@ -107,7 +106,7 @@ class Lattice:
    * @param y 
    * @return Node& 
    */
-  inline Node& get_node(unsigned int x, unsigned int y) const { return nodes[scalar_index(x, y)]; }
+  inline const Node& get_node(unsigned int x, unsigned int y) const { return nodes[scalar_index(x, y)]; }
 
   /// @}
   
@@ -133,18 +132,18 @@ class Lattice:
     /// @{
 
     /// Input velocity
-    std:vector<double> ux_in;
+    std::vector<double> ux_in;
     /// Input velocity
-    std:vector<double> uy_in;
+    std::vector<double> uy_in;
     /// Input density
-    std:vector<double> rho_in;
+    std::vector<double> rho_in;
 
     /// Output velocity
-    std:vector<double> ux_out;
+    std::vector<double> ux_out;
     /// Output velocity
-    std:vector<double> uy_out;
+    std::vector<double> uy_out;
     /// Output density
-    std:vector<double> rho_out;
+    std::vector<double> rho_out;
     /// @}
 
     /// @name Physical parameters
@@ -160,16 +159,16 @@ class Lattice:
     /// @{
     
     /// Time step
-    unsigned double dt = 0.1;
+    double dt = 0.1;
     
     /// Final time
-    unsigned int T_final = 1;
+    double T_final = 1.;
     
     /// Maximum number of time steps
-    unsigned int max_timesteps = 100;
+    unsigned int max_iter = 100;
     /// @}
     
-}
+};
 
 
 

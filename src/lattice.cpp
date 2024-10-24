@@ -16,7 +16,7 @@ Lattice::Lattice(unsigned int nx_, unsigned int ny_,
 {
   nodes.resize(nx*ny);
   node_types.resize(nx*ny, NodeType::solid);
-  boundary_node_dir.resize(nx*ny, std::vector<bool>(9, false));
+  boundary_node_dir.resize(nx*ny, std::vector<bool>(Node::dir, false));
   ux_in.resize(nx*ny, 0.);
   uy_in.resize(nx*ny, 0.);
   rho_in.resize(nx*ny, 1.0);
@@ -25,7 +25,8 @@ Lattice::Lattice(unsigned int nx_, unsigned int ny_,
   rho_out.resize(nx*ny, 1.0);
 }
 
-Lattice::set_ICs_&_BCs(std::vector<double> ux_in_, 
+void
+Lattice::load_ICs_and_BCs(std::vector<double> ux_in_, 
                             std::vector<double> uy_in_, 
                             std::vector<double> rho_in_,
                             std::vector<NodeType> node_types_,
@@ -38,21 +39,24 @@ Lattice::set_ICs_&_BCs(std::vector<double> ux_in_,
   boundary_node_dir = boundary_node_dir_;
 }
 
+void
 Lattice::populate_Nodes()
 {
   for(unsigned int y = 0; y<ny; ++y){
     for(unsigned int x = 0; x<nx; ++x){
       unsigned int index = scalar_index(x, y);
-      nodes[index] = Node(node_types[index], {x, y}, ux[index], uy[index], rho[index]);
+      nodes[index] = Node(node_types[index], {x, y}, ux_in[index], uy_in[index], rho_in[index]);
       nodes[index].set_boundary_node_dir(boundary_node_dir[index]);
       nodes[index].init();
     }
   }
 }
 
+void
 Lattice::run()
 {
-  for(/*time loop*/)
+   unsigned int iter = 0;
+  while(iter < max_iter)
   {
     for(unsigned int y = 0; y<ny; ++y)
     {
@@ -63,7 +67,7 @@ Lattice::run()
         {
           
           // TODO: check order of operations
-          nodes[index].apply_bc(); // inlet e BCs (zou he)
+          // nodes[index].apply_bc(); // inlet e BCs (zou he)
           nodes[index].compute_physical_quantities();
           nodes[index].load_adjacent_velocity_distributions(*this);
           nodes[index].collide_stream(*this);
@@ -75,5 +79,7 @@ Lattice::run()
         }
       }
     }
+
+    iter = iter + 1;
   }
 }

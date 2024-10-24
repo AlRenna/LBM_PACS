@@ -9,6 +9,10 @@
 #define __NODE_HPP__
 
 #include <vector>
+
+#include "utils.cpp"
+
+// Forward declaration
 class Lattice;
 
 /**
@@ -26,7 +30,7 @@ enum class NodeType
  * @brief Node class. Contains the information of the node in the lattice.
  * 
  */
-class Node:
+class Node
 {
   public:
     /**
@@ -40,7 +44,9 @@ class Node:
      */
     Node(NodeType node_type_, std::vector<unsigned int> coord_,
         double ux_, double uy_, double rho_);
-    ~Node();
+
+    Node() = default;
+    // ~Node();
 
     
     
@@ -59,7 +65,7 @@ class Node:
     /**
      * @brief Apply the boundary conditions.
      */
-    void apply_bc()
+    //void apply_bc();
 
     /**
      * @brief Compute the physical quantities (velocity components and density) from the distribution functions.
@@ -103,7 +109,7 @@ class Node:
     /// @{
 
     /// Number of dimensions
-    static int dim  = 2;
+    static const int dim  = 2;
     
     /**
      * @brief Number of velocity directions
@@ -112,20 +118,15 @@ class Node:
      * 3 0 1
      * 7 4 8
      */
-    static int dir = 9;
+    static const int dir = 9;
 
     /// Weights
-    static std::vector<double> weights = {4./9.,
-                                         1./9., 1./9., 1./9., 1./9.,
-                                         1./36., 1./36., 1./36., 1./36.};
-
+    static const std::vector<double> weights;
     /// Coefficients
-    static std::vector<std::vector<double>> coeff = {{0., 0.},
-                                                    {1., 0.}, {-1., 0.}, {0., 1.}, {0., -1.},
-                                                    {1., 1.}, {-1., -1.}, {-1., 1.}, {1., -1.}};
+    static const std::vector<std::vector<double>> coeff;
     
     /// Opposite direction indexes for Bounce Back
-    static std::vector<int> bb_indexes = {0, 3, 4, 1, 2, 7, 8, 5, 6};
+    static const std::vector<int> bb_indexes;
 
     /// @}
 
@@ -152,12 +153,12 @@ class Node:
     /// Node type (fluid, boundary, solid)
     NodeType node_type;
     /// Direction in which the BCs are to be applied around the node (if it's a boundary node)
-    std::vector<bool> boundary_node_dir{dir, false}; 
+    std::vector<bool> boundary_node_dir; 
     /// 2D coordinates of the node
     std::vector<unsigned int> coord;
 
 
-}
+};
 
 
 

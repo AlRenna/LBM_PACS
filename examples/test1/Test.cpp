@@ -5,14 +5,14 @@
  * @author Mattia Marzotto <mattia.marzotto@mail.polimi.it>
  */
 
-#include "lattice.hpp"
-#include "utils.cpp"
+#include "../../src/lattice.hpp"
+#include "../../src/utils_python.cpp"
 
 
 int main(int argc, char **argv)
 {
   // Run the python script to generate the lattice
-  run_python({"source env/bin/activate","python3 generate_lattice_RGB.py", "deactivate" });
+  run_terminal_python();//{"source env/bin/activate","python3 generate_lattice_RGB.py", "deactivate" });
 
   // Create the lattice
   Lattice lattice(100, 100, 0.1);

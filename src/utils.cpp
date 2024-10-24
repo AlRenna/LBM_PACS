@@ -1,17 +1,21 @@
-#include <cstdlib>
-#include <iostream>
+/**
+ * @file
+ *
+ * @author Alessandro Renna <alessandro1.renna@mail.polimi.it>
+ * @author Mattia Marzotto <mattia.marzotto@mail.polimi.it>
+ */
+
 #include <vector>
 
-void run_command(const std::string& command) {
-    int result = system(command.c_str());
-    if (result != 0) {
-        std::cerr << "Command failed with exit code: " << result << std::endl;
+// TODO: rivedi struttura .hpp e .cpp
+inline std::vector<double> operator*(double scalar, const std::vector<double>& vec) {
+    std::vector<double> result(vec.size());
+    for (std::size_t i = 0; i < vec.size(); ++i) {
+        result[i] = scalar * vec[i];
     }
+    return result;
 }
 
-void run_python(){
-    const std::vector<std::string> commands_ = {"source env/bin/activate","python3 src/python_scripts/generate_lattice_RGB.py", "deactivate" };
-    for (const auto &command : commands_){
-        run_command(command);
-    }
+inline std::vector<double> operator*(const std::vector<double>& vec, double scalar) {
+    return scalar * vec;
 }

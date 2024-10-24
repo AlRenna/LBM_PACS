@@ -6,6 +6,22 @@
  */
 
 #include "node.hpp"
+#include "lattice.hpp"
+
+class Lattice;
+
+const std::vector<double> 
+Node::weights = {4./9., 
+                1./9., 1./9., 1./9., 1./9., 
+                1./36., 1./36., 1./36., 1./36.};
+
+const std::vector<std::vector<double>> 
+Node::coeff = {{0., 0.},
+              {1., 0.}, {-1., 0.}, {0., 1.}, {0., -1.},
+              {1., 1.}, {-1., -1.}, {-1., 1.}, {1., -1.}};
+
+const std::vector<int> 
+Node::bb_indexes = {0, 3, 4, 1, 2, 7, 8, 5, 6};
 
 Node::Node(NodeType node_type_, std::vector<unsigned int> coord_,
         double ux_, double uy_, double rho_)
@@ -17,13 +33,15 @@ Node::Node(NodeType node_type_, std::vector<unsigned int> coord_,
 {
   f.resize(dir, 0.);
   f_adj.resize(dir, 0.);
+  boundary_node_dir.resize(dir, false);
 }
 
+void
 Node::init()
 {
   // initialize f
 
-  std::vector<double> w_rho = weights*rho;
+  std::vector<double> w_rho = rho * weights;
   double omusq = 1.0 - 1.5*(ux*ux+uy*uy);
   
   double tu = 3.0*ux;
@@ -35,6 +53,7 @@ Node::init()
   }
 }
 
+void
 Node::load_adjacent_velocity_distributions(const Lattice &lattice)
 {
   unsigned int nx = lattice.get_nx();
@@ -66,6 +85,7 @@ Node::load_adjacent_velocity_distributions(const Lattice &lattice)
   f_adj[8] = lattice.get_node(x_sx, y_down).get_f(8);
 }
 
+void
 Node::compute_physical_quantities()
 {
   // compute rho and U usign the equilibrium distribution
@@ -89,6 +109,7 @@ Node::compute_physical_quantities()
   uy = v;
 }
 
+void
 Node::collide_stream(const Lattice &lattice)
 {
   double tau = lattice.get_tau();
@@ -100,11 +121,11 @@ Node::collide_stream(const Lattice &lattice)
   // f_i(t+dt) = f_i(t) - 1/tau (f_i(t) - f_i^eq(t))
 
   // temporary variables
-  std::vector<double> w_tau_rho = weights*rho_*tauinv;
-  double omusq = 1.0 - 1.5*(u*u+v*v); // 1-(3/2)u.u
+  std::vector<double> w_tau_rho = weights*rho*tauinv;
+  double omusq = 1.0 - 1.5*(ux*ux+uy*uy); // 1-(3/2)u.u
   
-  double tu = 3.0*u;
-  double tv = 3.0*v;
+  double tu = 3.0*ux;
+  double tv = 3.0*uy;
     
   for(unsigned int i = 0; i<9; ++i){
     f[i] = omtauinv*f_adj[i] +
