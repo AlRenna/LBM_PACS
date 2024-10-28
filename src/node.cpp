@@ -136,9 +136,20 @@ Node::collide_stream(const Lattice &lattice)
 }
 
 void
-Node::apply_IBB(const Lattice &lattice)
+Node::apply_IBB()
 {
-  
+  // Interpolated Bounce-Back
+  for(unsigned int i = 1; i<dir; ++i){
+    // TODO: f_adj[i] is not a post-collision distribution
+    if(boundary_node_dir[i]){
+      f[bb_index[i]] = (2 * boundary_node_delta[i] * f[i] + 
+                      (1 - 2 * boundary_node_delta[i]) * f_adj[i]) * 
+                      (boundary_node_delta[i] < 0.5) +
+                      (1. / (2 * boundary_node_delta[i]) * f[i] + 
+                      ((2 * boundary_node_delta[i] - 1.) / (2 * boundary_node_delta[i])) * f[bb_index[i]]) *
+                      (boundary_node_delta[i] >= 0.5); 
+    }
+  }
 }
 
 void

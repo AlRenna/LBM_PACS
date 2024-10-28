@@ -78,8 +78,14 @@ class Node
 
      /**
      * @brief Apply the Iterpolated Bounce-Back.
+     * Use the post-collision distribution to compute the IBB:
+     * 
+     * f_bb_i = 2*q_i*f_i(x_b) + (1 - 2*q)*f_i(x_f) if q_i < 1/2
+     * 
+     * f_bb_i = 1/(2*q_i)*f_i(x_b) + [(2*q - 1)/(2*q)]*f_bb_i(x_b) if q_i >= 1/2
+     *
      */
-    void apply_IBB(const Lattice &lattice);
+    void apply_IBB();
 
 
     /// @name Getters
