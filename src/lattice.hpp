@@ -55,7 +55,8 @@ class Lattice
                std::vector<double> uy_in_, 
                std::vector<double> rho_in_,
                std::vector<NodeType> node_types_,
-               std::vector<std::vector<bool>> boundary_node_dir_);
+               std::vector<std::vector<bool>> boundary_node_dir_
+               std::vector<std::vector<double>> boundary_node_delta_);
 
   /**
    * @brief Function to populate the lattice nodes with the ICs and BCs. 
@@ -123,8 +124,10 @@ class Lattice
     std::vector<Node> nodes;
     /// Node types (fluid, solid, etc.)
     std::vector<NodeType> node_types;
-    /// Direction in which the BCs are to be applied for each boundary node 
+    /// Directions in which the BCs are to be applied for each boundary node 
     std::vector<std::vector<bool>> boundary_node_dir;
+    /// Distances between the node and the wall along the direction of boundary_node_dir for each boundary node
+        std::vector<std::vector<double>> boundary_node_delta;
 
     /// @}
 

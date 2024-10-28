@@ -30,13 +30,15 @@ Lattice::load_ICs_and_BCs(std::vector<double> ux_in_,
                             std::vector<double> uy_in_, 
                             std::vector<double> rho_in_,
                             std::vector<NodeType> node_types_,
-                            std::vector<std::vector<bool>> boundary_node_dir_)
+                            std::vector<std::vector<bool>> boundary_node_dir_
+                            std::vector<std::vector<double>> boundary_node_delta_)
 {
   ux_in = ux_in_;
   uy_in = uy_in_;
   rho_in = rho_in_;
   node_types = node_types_;
   boundary_node_dir = boundary_node_dir_;
+  boundary_node_delta = boundary_node_delta_;
 }
 
 void
@@ -46,7 +48,7 @@ Lattice::populate_Nodes()
     for(unsigned int x = 0; x<nx; ++x){
       unsigned int index = scalar_index(x, y);
       nodes[index] = Node(node_types[index], {x, y}, ux_in[index], uy_in[index], rho_in[index]);
-      nodes[index].set_boundary_node_dir(boundary_node_dir[index]);
+      nodes[index].set_boundary_node_properties(boundary_node_dir[index], boundary_node_delta[index], dt);
       nodes[index].init();
     }
   }
@@ -72,6 +74,8 @@ Lattice::run()
           nodes[index].load_adjacent_velocity_distributions(*this);
           nodes[index].collide_stream(*this);
 
+          // if(node_types[index] == NodeType::boundary)
+          //    nodes[index].apply_IBB(*this); // inlet e BCs (zou he)
           // nodes[index].compute_integrals();
           // nodes[index].save(*this);
 

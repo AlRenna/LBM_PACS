@@ -34,6 +34,7 @@ Node::Node(NodeType node_type_, std::vector<unsigned int> coord_,
   f.resize(dir, 0.);
   f_adj.resize(dir, 0.);
   boundary_node_dir.resize(dir, false);
+  boundary_node_delta.resize(dir, 0.);
 }
 
 void
@@ -131,5 +132,26 @@ Node::collide_stream(const Lattice &lattice)
     f[i] = omtauinv*f_adj[i] +
             w_tau_rho[i]*(omusq + 
             (coeff[i][0]*tu + coeff[i][1]*tv)*(1.0+0.5*(coeff[i][0]*tu + coeff[i][1]*tv)));
+  }
+}
+
+void
+Node::apply_IBB(const Lattice &lattice)
+{
+  
+}
+
+void
+Node::set_boundary_node_properties(std::vector<bool> boundary_node_dir_, 
+                                  std::vector<double> boundary_node_delta_
+                                  double dt)
+{
+  boundary_node_dir = boundary_node_dir_;
+  boundary_node_delta = boundary_node_delta_;
+  // Evaluate q_i = d_i / (|C_i| * dt) weighted distance by direction
+  for(unsigned int i = 1; i<dir; ++i){
+    if(boundary_node_dir[i]){
+      boundary_node_delta[i] = boundary_node_delta[i] / (sqrt(coeff[i][0]*coeff[i][0] + coeff[i][1]*coeff[i][1]) * dt);
+    }
   }
 }

@@ -61,11 +61,6 @@ class Node
      * @param lattice 
      */
     void load_adjacent_velocity_distributions(const Lattice &lattice);
-    
-    /**
-     * @brief Apply the boundary conditions.
-     */
-    //void apply_bc();
 
     /**
      * @brief Compute the physical quantities (velocity components and density) from the distribution functions.
@@ -81,6 +76,10 @@ class Node
      */
     void collide_stream(const Lattice &lattice);
 
+     /**
+     * @brief Apply the Iterpolated Bounce-Back.
+     */
+    void apply_IBB(const Lattice &lattice);
 
 
     /// @name Getters
@@ -96,11 +95,15 @@ class Node
     /// @{
 
     /**
-     * @brief Fill the object containg the direction in which the BCs will be applied.
+     * @brief Fill the vectors containg the boundary node properties, 
+     * such as the direction in which to apply the BCs (IBB) and the 
+     * weigthed distance between the node and the wall.
      * 
      * @param boundary_node_dir_ 
      */
-    inline void set_boundary_node_dir(std::vector<bool> boundary_node_dir_) { boundary_node_dir = boundary_node_dir_; }
+    void set_boundary_node_properties(std::vector<bool> boundary_node_dir_, 
+                                      std::vector<double> boundary_node_delta_
+                                      double dt);
     /// @}
 
 
@@ -114,8 +117,11 @@ class Node
     /**
      * @brief Number of velocity directions
      * Direction numbering scheme:
+     * 
      * 6 2 5
+     * 
      * 3 0 1
+     * 
      * 7 4 8
      */
     static const int dir = 9;
@@ -135,8 +141,11 @@ class Node
     /**
      * @brief Velocity distribution functions.
      * Direction numbering scheme:
+     * 
      * 6 2 5
+     * 
      * 3 0 1
+     * 
      * 7 4 8
      */
     std::vector<double> f;
@@ -152,8 +161,10 @@ class Node
 
     /// Node type (fluid, boundary, solid)
     NodeType node_type;
-    /// Direction in which the BCs are to be applied around the node (if it's a boundary node)
-    std::vector<bool> boundary_node_dir; 
+    /// Directions in which the BCs are to be applied around the node (if it's a boundary node)
+    std::vector<bool> boundary_node_dir;
+    /// Distance between the node and the wall (if it's a boundary node), along the direction of boundary_node_dir
+    std::vector<double> boundary_node_delta;
     /// 2D coordinates of the node
     std::vector<unsigned int> coord;
 
