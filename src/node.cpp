@@ -32,7 +32,6 @@ Node::Node(NodeType node_type_, std::vector<unsigned int> coord_,
     rho(rho_)
 {
   f = std::make_unique<std::vector<double>>(dir, 0.);
-  f_old = std::make_unique<std::vector<double>>(dir, 0.);
   f_adj = std::make_unique<std::vector<double>>(dir, 0.);
   boundary_node_dir.resize(dir, false);
   boundary_node_delta.resize(dir, 0.);
@@ -95,20 +94,20 @@ Node::apply_IBB()
       y_adg = coord[1] + coeff[i][1];
       // since we have already collided and streamed, we take the post-collision value from f_adj
       // f_adj_post_coll = lattice.get_node(x_adg, y_adg).get_f(i);
-      f_adj_post_coll = f_adj[i]; 
+      f_adj_post_coll = (*f_adj)[i]; 
       
-      (*f)[bb_index[i]] = (2 * boundary_node_delta[i] * (*f)[i] + 
+      (*f)[bb_indexes[i]] = (2 * boundary_node_delta[i] * (*f)[i] + 
                       (1 - 2 * boundary_node_delta[i]) * f_adj_post_coll) * 
                       (boundary_node_delta[i] < 0.5) +
                       (1. / (2 * boundary_node_delta[i]) * (*f)[i] + 
-                      ((2 * boundary_node_delta[i] - 1.) / (2 * boundary_node_delta[i])) * (*f)[bb_index[i]]) *
+                      ((2 * boundary_node_delta[i] - 1.) / (2 * boundary_node_delta[i])) * (*f)[bb_indexes[i]]) *
                       (boundary_node_delta[i] >= 0.5); 
     }
   }
 }
 
 void
-Node::stream(const Lattice& lattice)
+Node::stream(Lattice& lattice)
 {
   // direction numbering scheme
   // 6 2 5
@@ -163,7 +162,7 @@ Node::update_f()
 
 void
 Node::set_boundary_node_properties(std::vector<bool> boundary_node_dir_, 
-                                  std::vector<double> boundary_node_delta_
+                                  std::vector<double> boundary_node_delta_,
                                   double dt)
 {
   boundary_node_dir = boundary_node_dir_;
@@ -171,7 +170,7 @@ Node::set_boundary_node_properties(std::vector<bool> boundary_node_dir_,
   // Evaluate q_i = d_i / (|C_i| * dt) weighted distance by direction
   for(unsigned int i = 1; i<dir; ++i){
     if(boundary_node_dir[i]){
-      boundary_node_delta[i] = boundary_node_delta[i] / (sqrt(coeff[i][0]*coeff[i][0] + coeff[i][1]*coeff[i][1]) * dt);
+      boundary_node_delta[i] = boundary_node_delta[i] / (std::sqrt(coeff[i][0]*coeff[i][0] + coeff[i][1]*coeff[i][1]) * dt);
     }
   }
 }

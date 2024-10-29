@@ -41,7 +41,7 @@ Lattice::load_ICs_and_BCs(const std::vector<double>& ux_in_,
 }
 
 void 
-Node::readNodesFromCSV(const std::string& filename) {
+Lattice::readNodesFromCSV(const std::string& filename) {
   std::ifstream file(filename);
   if (!file.is_open()) {
       throw std::runtime_error("Could not open file");
@@ -57,17 +57,19 @@ Node::readNodesFromCSV(const std::string& filename) {
     unsigned int x = std::stoi(token);
     std::getline(ss, token, ',');
     unsigned int y = std::stoi(token);
+    unsigned int index = scalar_index(x, y);
 
     // Read NodeType
     std::getline(ss, token, ',');
     NodeType nodeType = static_cast<NodeType>(std::stoi(token));
-
+    node_types[index] = nodeType;
+    
     // Read the last 8 columns
     for (int i = 1; i < Node::dir; ++i) {
       std::getline(ss, token, ',');
       double value = std::stod(token);
-      boundary_node_delta[i] = value;
-      boundary_node_dir[i] = (value > 0.0);
+      boundary_node_delta[index][i] = value;
+      boundary_node_dir[index][i] = (value > 0.0);
     }
   }
 

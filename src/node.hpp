@@ -9,6 +9,8 @@
 #define __NODE_HPP__
 
 #include <vector>
+#include <memory>
+#include <cmath>
 
 #include "utils.cpp"
 
@@ -71,7 +73,7 @@ class Node
      * Stream the distribution functions to the adjacent nodes.
      * 
      */
-    void stream();
+    void stream(Lattice& lattice);
 
      /**
      * @brief Apply the Iterpolated Bounce-Back.
@@ -116,7 +118,7 @@ class Node
      * @param boundary_node_dir_ 
      */
     void set_boundary_node_properties(std::vector<bool> boundary_node_dir_, 
-                                      std::vector<double> boundary_node_delta_
+                                      std::vector<double> boundary_node_delta_,
                                       double dt);
 
     /**
