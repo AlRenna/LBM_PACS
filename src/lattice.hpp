@@ -100,14 +100,22 @@ class Lattice
   inline double get_tau() const { return tau; }
   
   /**
-   * @brief Get the node object given the 2D coordinates.
+   * @brief Get the (const) node object given the 2D coordinates.
    * 
    * @param x 
    * @param y 
    * @return Node& 
    */
   inline const Node& get_node(unsigned int x, unsigned int y) const { return nodes[scalar_index(x, y)]; }
-
+  
+  /**
+   * @brief Get the node object given the 2D coordinates.
+   * 
+   * @param x 
+   * @param y 
+   * @return Node& 
+   */
+  inline Node & get_node(unsigned int x, unsigned int y) { return nodes[scalar_index(x, y)]; }
   /// @}
   
   private:

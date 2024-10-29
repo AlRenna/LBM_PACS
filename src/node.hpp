@@ -55,28 +55,23 @@ class Node
     /**
      * @brief Initialize the distribution functions to the equilibrium values.
      */
-    void init();
+    void init_equilibrium();
 
     /**
-     * @brief Load the adjacent velocity distributions from the adjacent nodes inside the lattice.
-     * 
-     * @param lattice 
-     */
-    void load_adjacent_velocity_distributions(const Lattice &lattice);
-
-    /**
-     * @brief Compute the physical quantities (velocity components and density) from the distribution functions.
-     */
-    void compute_physical_quantities();
-
-    /**
-     * @brief Collision and streaming steps.
+     * @brief Collision step.
      * Compute and relax to the equilibrium distribution. The BGK collision operator is used: 
      * f_i(t+dt) = f_i(t) - 1/tau (f_i(t) - f_i^eq(t))
      * 
      * @param lattice 
      */
-    void collide_stream(const Lattice &lattice);
+    void collide(const Lattice &lattice);
+
+    /**
+     * @brief Streaming step.
+     * Stream the distribution functions to the adjacent nodes.
+     * 
+     */
+    void stream();
 
      /**
      * @brief Apply the Iterpolated Bounce-Back.
@@ -90,13 +85,24 @@ class Node
     void apply_IBB();
 
 
+    /**
+     * @brief Compute the physical quantities (velocity components and density) from the distribution functions.
+     */
+    void compute_physical_quantities();
+
+
+    void update_f();
+
+
+
     /// @name Getters
     /// @{ 
     
     /**
      * @brief Get the distribution function at index (direction) i.
      */
-    inline double get_f(int i) const { return f[i]; }
+    inline double get_f(int i) const { return (*f)[i]; }
+    
     /// @}
 
     /// @name Setters
@@ -112,6 +118,14 @@ class Node
     void set_boundary_node_properties(std::vector<bool> boundary_node_dir_, 
                                       std::vector<double> boundary_node_delta_
                                       double dt);
+
+    /**
+     * @brief Set the distribution for the adjacent node alorng direction i.
+     * 
+     * @param i 
+     * @param value 
+     */
+    inline void set_f_adj(int i, double value) { (*f_adj)[i] = value; }
     /// @}
 
 
@@ -156,9 +170,10 @@ class Node
      * 
      * 7 4 8
      */
-    std::vector<double> f;
+    std::unique_ptr<std::vector<double>> f;
+
     /// Velocity distribution functions from adjacent nodes
-    std::vector<double> f_adj;
+    std::unique_ptr<std::vector<double>> f_adj;
 
     /// Node velocity components (x)
     double ux;

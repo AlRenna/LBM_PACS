@@ -31,16 +31,17 @@ Node::Node(NodeType node_type_, std::vector<unsigned int> coord_,
     uy(uy_),
     rho(rho_)
 {
-  f.resize(dir, 0.);
-  f_adj.resize(dir, 0.);
+  f = std::make_unique<std::vector<double>>(dir, 0.);
+  f_old = std::make_unique<std::vector<double>>(dir, 0.);
+  f_adj = std::make_unique<std::vector<double>>(dir, 0.);
   boundary_node_dir.resize(dir, false);
   boundary_node_delta.resize(dir, 0.);
 }
 
 void
-Node::init()
+Node::init_equilibrium()
 {
-  // initialize f
+  // initialize f to equilibrium distribution (only at step 0)
 
   std::vector<double> w_rho = rho * weights;
   double omusq = 1.0 - 1.5*(ux*ux+uy*uy);
@@ -49,69 +50,13 @@ Node::init()
   double tv = 3.0*uy;
 
   for(unsigned int i = 0; i<dir; ++i){
-    f[i] = w_rho[i]*(omusq + 
+    (*f)[i] = w_rho[i]*(omusq + 
             (coeff[i][0]*tu + coeff[i][1]*tv)*(1.0+0.5*(coeff[i][0]*tu + coeff[i][1]*tv)));
   }
 }
 
 void
-Node::load_adjacent_velocity_distributions(const Lattice &lattice)
-{
-  unsigned int nx = lattice.get_nx();
-  unsigned int ny = lattice.get_ny();
-  unsigned int x = coord[0];
-  unsigned int y = coord[1];
-
-  unsigned int x_dx = (x+1)%nx;
-  unsigned int y_down = (y+1)%ny;
-  unsigned int x_sx = (nx+x-1)%nx;
-  unsigned int y_up = (ny+y-1)%ny;
-  
-  // direction numbering scheme
-  // 6 2 5
-  // 3 0 1
-  // 7 4 8
-  
-  f_adj[0] = f[0];
-
-  // load populations from adjacent nodes
-  // TODO: check indices
-  f_adj[1] = lattice.get_node(x_sx, y     ).get_f(1);
-  f_adj[2] = lattice.get_node(x,    y_up  ).get_f(2);
-  f_adj[3] = lattice.get_node(x_dx, y     ).get_f(3);
-  f_adj[4] = lattice.get_node(x,    y_down).get_f(4);
-  f_adj[5] = lattice.get_node(x_sx, y_up  ).get_f(5);
-  f_adj[6] = lattice.get_node(x_dx, y_up  ).get_f(6);
-  f_adj[7] = lattice.get_node(x_dx, y_down).get_f(7);
-  f_adj[8] = lattice.get_node(x_sx, y_down).get_f(8);
-}
-
-void
-Node::compute_physical_quantities()
-{
-  // compute rho and U usign the equilibrium distribution
-  double rho_ = 0.0;
-  for (unsigned int i = 0; i < 9; ++i)
-  {
-      rho_ += f_adj[i];
-  }
-  rho = rho_;
-  double rhoinv = 1.0/rho;
-
-  double u = 0.;
-  double v = 0.;
-  for (unsigned int i = 0; i < 9; ++i)
-  {
-      u += rhoinv*coeff[i][0]*f_adj[i];
-      v += rhoinv*coeff[i][1]*f_adj[i];
-  }
-
-  ux = u;
-  uy = v;
-}
-
-void
-Node::collide_stream(const Lattice &lattice)
+Node::collide(const Lattice &lattice)
 {
   double tau = lattice.get_tau();
   const double tauinv = 1./tau; // 1/tau
@@ -127,29 +72,93 @@ Node::collide_stream(const Lattice &lattice)
   
   double tu = 3.0*ux;
   double tv = 3.0*uy;
-    
+  double f_eq = 0.0;
   for(unsigned int i = 0; i<9; ++i){
-    f[i] = omtauinv*f_adj[i] +
-            w_tau_rho[i]*(omusq + 
+    f_eq = w_tau_rho[i]*(omusq + 
             (coeff[i][0]*tu + coeff[i][1]*tv)*(1.0+0.5*(coeff[i][0]*tu + coeff[i][1]*tv)));
-  }
+    (*f)[i] = omtauinv * (*f)[i] + tauinv * f_eq;
+    }
 }
 
 void
 Node::apply_IBB()
 {
+  double f_adj_post_coll = 0.0;
+  unsigned int x_adg = 0;
+  unsigned int y_adg = 0;
+
   // Interpolated Bounce-Back
   for(unsigned int i = 1; i<dir; ++i){
-    // TODO: f_adj[i] is not a post-collision distribution
     if(boundary_node_dir[i]){
-      f[bb_index[i]] = (2 * boundary_node_delta[i] * f[i] + 
-                      (1 - 2 * boundary_node_delta[i]) * f_adj[i]) * 
+      // take new f values from the adjacent nodes
+      x_adg = coord[0] + coeff[i][0];
+      y_adg = coord[1] + coeff[i][1];
+      // since we have already collided and streamed, we take the post-collision value from f_adj
+      // f_adj_post_coll = lattice.get_node(x_adg, y_adg).get_f(i);
+      f_adj_post_coll = f_adj[i]; 
+      
+      (*f)[bb_index[i]] = (2 * boundary_node_delta[i] * (*f)[i] + 
+                      (1 - 2 * boundary_node_delta[i]) * f_adj_post_coll) * 
                       (boundary_node_delta[i] < 0.5) +
-                      (1. / (2 * boundary_node_delta[i]) * f[i] + 
-                      ((2 * boundary_node_delta[i] - 1.) / (2 * boundary_node_delta[i])) * f[bb_index[i]]) *
+                      (1. / (2 * boundary_node_delta[i]) * (*f)[i] + 
+                      ((2 * boundary_node_delta[i] - 1.) / (2 * boundary_node_delta[i])) * (*f)[bb_index[i]]) *
                       (boundary_node_delta[i] >= 0.5); 
     }
   }
+}
+
+void
+Node::stream(const Lattice& lattice)
+{
+  // direction numbering scheme
+  // 6 2 5
+  // 3 0 1
+  // 7 4 8
+
+  unsigned int x = coord[0];
+  unsigned int y = coord[1];
+  unsigned int x_adg = 0;
+  unsigned int y_adg = 0;
+
+  (*f_adj)[0] = (*f)[0];
+
+  for(unsigned int i = 1; i<dir; ++i){
+    if(!boundary_node_dir[i]){
+      x_adg = x + coeff[i][0];
+      y_adg = y + coeff[i][1];
+      lattice.get_node(x_adg, y_adg).set_f_adj(i, (*f)[i]);
+    }
+  }
+}
+
+void
+Node::compute_physical_quantities()
+{
+  // compute rho and U usign the equilibrium distribution
+  double rho_ = 0.0;
+  for (unsigned int i = 0; i < 9; ++i)
+  {
+      rho_ += (*f)[i];
+  }
+  rho = rho_;
+  double rhoinv = 1.0/rho;
+
+  double u = 0.;
+  double v = 0.;
+  for (unsigned int i = 0; i < 9; ++i)
+  {
+      u += rhoinv*coeff[i][0]*(*f)[i];
+      v += rhoinv*coeff[i][1]*(*f)[i];
+  }
+
+  ux = u;
+  uy = v;
+}
+
+void
+Node::update_f()
+{
+  f.swap(f_adj);
 }
 
 void

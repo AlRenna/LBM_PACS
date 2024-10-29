@@ -82,7 +82,7 @@ Lattice::populate_Nodes()
       unsigned int index = scalar_index(x, y);
       nodes[index] = Node(node_types[index], {x, y}, ux_in[index], uy_in[index], rho_in[index]);
       nodes[index].set_boundary_node_properties(boundary_node_dir[index], boundary_node_delta[index], dt);
-      nodes[index].init();
+      nodes[index].init_equilibrium();
     }
   }
 }
@@ -90,7 +90,7 @@ Lattice::populate_Nodes()
 void
 Lattice::run()
 {
-   unsigned int iter = 0;
+  unsigned int iter = 0;
   while(iter < max_iter)
   {
     for(unsigned int y = 0; y<ny; ++y)
@@ -101,18 +101,30 @@ Lattice::run()
         if(node_types[index] != NodeType::solid)
         {
           
-          // TODO: check order of operations
           // nodes[index].apply_bc(); // inlet e BCs (zou he)
-          nodes[index].compute_physical_quantities();
-          nodes[index].load_adjacent_velocity_distributions(*this);
-          nodes[index].collide_stream(*this);
+          nodes[index].collide(*this);
+          nodes[index].stream(*this);
+        }
+      }
+    }
 
-          // if(node_types[index] == NodeType::boundary)
-          //    nodes[index].apply_IBB(*this); // inlet e BCs (zou he)
-          // nodes[index].compute_integrals();
-          // nodes[index].save(*this);
-
+    // We separate the streaming step from the collision step
+    // We need the updated information on all the node to procede
+    for(unsigned int y = 0; y<ny; ++y)
+    {
+      for(unsigned int x = 0; x<nx; ++x)
+      {
+        unsigned int index = scalar_index(x, y);
+        if(node_types[index] != NodeType::solid)
+        {
+          if(node_types[index] == NodeType::boundary)
+            nodes[index].apply_IBB(); // BCs (zou he)
           
+          nodes[index].compute_physical_quantities();
+          // nodes[index].compute_integrals();
+
+          // nodes[index].save(*this);
+          nodes[index].update_f();          
         }
       }
     }
