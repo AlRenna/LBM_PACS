@@ -22,8 +22,10 @@ class Lattice;
 enum class NodeType
 {
   fluid,
-  boundary,
-  solid
+  solid,
+  inflow,
+  outflow,
+  boundary
 };
 
 /**

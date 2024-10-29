@@ -26,19 +26,52 @@ Lattice::Lattice(unsigned int nx_, unsigned int ny_,
 }
 
 void
-Lattice::load_ICs_and_BCs(std::vector<double> ux_in_, 
-                            std::vector<double> uy_in_, 
-                            std::vector<double> rho_in_,
-                            std::vector<NodeType> node_types_,
-                            std::vector<std::vector<bool>> boundary_node_dir_
-                            std::vector<std::vector<double>> boundary_node_delta_)
+Lattice::load_ICs_and_BCs(const std::vector<double>& ux_in_, 
+                          const std::vector<double>& uy_in_, 
+                          const std::vector<double>& rho_in_,
+                          const std::string& filename_nodes)
 {
   ux_in = ux_in_;
   uy_in = uy_in_;
   rho_in = rho_in_;
-  node_types = node_types_;
-  boundary_node_dir = boundary_node_dir_;
-  boundary_node_delta = boundary_node_delta_;
+  readNodesFromCSV(filename_nodes);
+
+  // Populate the nodes
+  populate_Nodes();
+}
+
+void 
+Node::readNodesFromCSV(const std::string& filename) {
+  std::ifstream file(filename);
+  if (!file.is_open()) {
+      throw std::runtime_error("Could not open file");
+  }
+
+  std::string line;
+  while (std::getline(file, line)) {
+    std::stringstream ss(line);
+    std::string token;
+
+    // Read coordinates
+    std::getline(ss, token, ',');
+    unsigned int x = std::stoi(token);
+    std::getline(ss, token, ',');
+    unsigned int y = std::stoi(token);
+
+    // Read NodeType
+    std::getline(ss, token, ',');
+    NodeType nodeType = static_cast<NodeType>(std::stoi(token));
+
+    // Read the last 8 columns
+    for (int i = 1; i < Node::dir; ++i) {
+      std::getline(ss, token, ',');
+      double value = std::stod(token);
+      boundary_node_delta[i] = value;
+      boundary_node_dir[i] = (value > 0.0);
+    }
+  }
+
+  file.close();
 }
 
 void

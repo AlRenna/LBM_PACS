@@ -11,6 +11,8 @@
 
 int main(int argc, char **argv)
 {
+  // TODO: Modificare script python per far si che i valori di nx e ny vengano presi dal file cpp o da un file di testo
+  // TODO: creare un file cpp o python che generi un file .txt contente i valori iniziali e altri parametri necessari all'esecuzione
   // Run the python script to generate the lattice
   run_terminal_python();//{"source env/bin/activate","python3 generate_lattice_RGB.py", "deactivate" });
 

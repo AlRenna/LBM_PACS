@@ -10,7 +10,10 @@
 
 #include "node.hpp"
 
+#include <fstream>
+#include <sstream>
 #include <vector>
+#include <string>
 #include <memory>
 
 /*
@@ -45,18 +48,14 @@ class Lattice
    * The function must be called from the main function before running the simulation so 
    * that the lattice can be properly initialized.
    * 
-   * @param ux_in_ 
-   * @param uy_in_ 
-   * @param rho_in_ 
-   * @param node_types_ 
-   * @param boundary_node_dir_ 
    */
-  void load_ICs_and_BCs(std::vector<double> ux_in_, 
-               std::vector<double> uy_in_, 
-               std::vector<double> rho_in_,
-               std::vector<NodeType> node_types_,
-               std::vector<std::vector<bool>> boundary_node_dir_
-               std::vector<std::vector<double>> boundary_node_delta_);
+  void load_ICs_and_BCs(const std::vector<double>& ux_in_, 
+                        const std::vector<double>& uy_in_, 
+                        const std::vector<double>& rho_in_,
+                        const std::string& filename_nodes);
+
+  void readNodesFromCSV(const std::string& filename_nodes);
+
 
   /**
    * @brief Function to populate the lattice nodes with the ICs and BCs. 
