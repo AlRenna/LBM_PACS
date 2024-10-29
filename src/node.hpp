@@ -136,7 +136,7 @@ class Node
     /// @{
 
     /// Number of dimensions
-    static const int dim  = 2;
+    static const int dim;
     
     /**
      * @brief Number of velocity directions
@@ -148,7 +148,7 @@ class Node
      * 
      * 7 4 8
      */
-    static const int dir = 9;
+    static const int dir;
 
     /// Weights
     static const std::vector<double> weights;

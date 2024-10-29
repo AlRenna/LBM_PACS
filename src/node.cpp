@@ -10,6 +10,10 @@
 
 class Lattice;
 
+const int Node::dim  = 2;
+
+const int Node::dir = 9;
+
 const std::vector<double> 
 Node::weights = {4./9., 
                 1./9., 1./9., 1./9., 1./9., 
