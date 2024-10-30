@@ -31,7 +31,8 @@ enum class NodeType
 };
 
 /**
- * @brief Node class. Contains the information of the node in the lattice.
+ * @brief Node class. Contains the information of the node in the lattice such as: type, position, velocity
+ * distribution and physical quantities.
  * 
  */
 class Node
@@ -40,11 +41,11 @@ class Node
     /**
      * @brief Constructor
      * 
-     * @param node_type_ 
-     * @param coord_ 
-     * @param ux_ 
-     * @param uy_ 
-     * @param rho_ 
+     * @param node_type_ A NodeType enumerator indicating the type of the node (fluid, boundary, solid).
+     * @param coord_ 2D coordinates of the node.
+     * @param ux_ Initial velocity component in the x direction.
+     * @param uy_ Initial velocity component in the y direction.
+     * @param rho_ Initial density of the node.
      */
     Node(NodeType node_type_, std::vector<unsigned int> coord_,
         double ux_, double uy_, double rho_);
@@ -52,8 +53,6 @@ class Node
     Node() = default;
     // ~Node();
 
-    
-    
     /**
      * @brief Initialize the distribution functions to the equilibrium values.
      */
@@ -124,7 +123,7 @@ class Node
     /**
      * @brief Set the distribution for the adjacent node alorng direction i.
      * 
-     * @param i 
+     * @param i Direction index
      * @param value 
      */
     inline void set_f_adj(int i, double value) { (*f_adj)[i] = value; }

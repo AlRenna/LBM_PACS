@@ -26,7 +26,8 @@ segmentata, ci restituisca:
 
 
 /**
- * @brief Class to model the lattice for the resolution of the LB method.
+ * @brief Class to model the lattice for the resolution of the LB method. 
+ * The class contains the nodes of the lattice and the methods to run the simulation.
  * 
  */
 class Lattice
@@ -47,6 +48,11 @@ class Lattice
    * @brief Function to set the initial and boundary conditions.
    * The function must be called from the main function before running the simulation so 
    * that the lattice can be properly initialized.
+   * 
+   * @param ux_in_ Input velocity (x dirextion)
+   * @param uy_in_ Input velocity (y direction)
+   * @param rho_in_ Input density
+   * @param filename_nodes File containing the information on the nodes of the lattice
    * 
    */
   void load_ICs_and_BCs(const std::vector<double>& ux_in_, 
@@ -109,7 +115,7 @@ class Lattice
   inline const Node& get_node(unsigned int x, unsigned int y) const { return nodes[scalar_index(x, y)]; }
   
   /**
-   * @brief Get the node object given the 2D coordinates.
+   * @brief Get the (non const) node object given the 2D coordinates.
    * 
    * @param x 
    * @param y 
