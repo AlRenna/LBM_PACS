@@ -144,8 +144,8 @@ def create_csv_with_point_types_and_distances(internal_points, external_points, 
 # Example usage
 if __name__ == "__main__":
     image_path = 'image.png'
-    num_points_x = 10
-    num_points_y = 10
+    num_points_x = 100
+    num_points_y = 100
     internal_points, external_points, x_spacing, y_spacing, image = classify_points(image_path, num_points_x, num_points_y)
     internal_points, boundary_points_distances = identify_boundary_points_and_distances(internal_points, external_points, x_spacing, y_spacing, image)
     create_csv_with_point_types_and_distances(internal_points, external_points, boundary_points_distances, num_points_x, num_points_y, 'output.csv')

@@ -16,14 +16,24 @@ int main(int argc, char **argv)
   // Run the python script to generate the lattice
   run_terminal_python();//{"source env/bin/activate","python3 generate_lattice_RGB.py", "deactivate" });
 
+  int nx = 10;
+  int ny = 10;
   // Create the lattice
-  Lattice lattice(100, 100, 0.1);
+  Lattice lattice(10, 10, 0.1);
 
+  std::vector<double> ux_in(nx*ny, 0.0);
+  std::vector<double> uy_in(nx*ny, 0.0);
+  std::vector<double> rho_in(nx*ny, 1.0);
+
+  for (int i = 0; i < nx; ++i)
+  {
+    ux_in[i] = 0.1;
+  }
   // Set the initial and boundary conditions
-  // lattice.set_ICs_&_BCs({0.1, 0.1}, {0.1, 0.1}, {0.1, 0.1}, {NodeType::FLUID, NodeType::FLUID}, {{true, true}, {true, true}});
+  lattice.load_ICs_and_BCs(ux_in, uy_in, rho_in, "output.csv");
 
   // Run the simulation
-  // lattice.run();
+  lattice.run();
 
   return 0;
 }
