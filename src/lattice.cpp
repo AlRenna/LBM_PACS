@@ -129,9 +129,15 @@ Lattice::run()
           // nodes[index].compute_integrals();
 
           // nodes[index].save(*this);
+          // TODO: scrivere nelle variabili di output le quantità fisiche
           nodes[index].update_f();          
         }
       }
+      
+       if( iter%5 == 0 || iter == max_iter-1)
+       {
+         // TODO: salvare le quantità fisiche in un file
+       }
     }
 
     iter = iter + 1;
