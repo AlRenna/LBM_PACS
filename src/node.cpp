@@ -84,18 +84,24 @@ Node::collide(const Lattice &lattice)
 }
 
 void
-Node::apply_IBB()
+Node::apply_IBB(const Lattice &lattice)
 {
   double f_adj_post_coll = 0.0;
   unsigned int x_adg = 0;
   unsigned int y_adg = 0;
+  double ux_wall = 0.;
+  double uy_wall = 0.;
 
   // Interpolated Bounce-Back
   for(unsigned int i = 1; i<dir; ++i){
     if(boundary_node_dir[i]){
-      // take new f values from the adjacent nodes
+
+      // take the velocity at the wall node
       x_adg = coord[0] + coeff[i][0];
       y_adg = coord[1] + coeff[i][1];
+      ux_wall = lattice.get_node(x_adg, y_adg).get_ux();
+      uy_wall = lattice.get_node(x_adg, y_adg).get_uy();
+
       // since we have already collided and streamed, we take the post-collision value from f_adj
       // f_adj_post_coll = lattice.get_node(x_adg, y_adg).get_f(i);
       f_adj_post_coll = (*f_adj)[i]; 
@@ -105,7 +111,8 @@ Node::apply_IBB()
                       (boundary_node_delta[i] < 0.5) +
                       (1. / (2 * boundary_node_delta[i]) * (*f)[i] + 
                       ((2 * boundary_node_delta[i] - 1.) / (2 * boundary_node_delta[i])) * (*f)[bb_indexes[i]]) *
-                      (boundary_node_delta[i] >= 0.5); 
+                      (boundary_node_delta[i] >= 0.5) - 
+                      (ux_wall * coeff[i][0] + uy_wall * coeff[i][1]) * weights[i] * rho * 6; // Wall velocity term
     }
   }
 }

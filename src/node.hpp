@@ -83,7 +83,7 @@ class Node
      * f_bb_i = 1/(2*q_i)*f_i(x_b) + [(2*q - 1)/(2*q)]*f_bb_i(x_b) if q_i >= 1/2
      *
      */
-    void apply_IBB();
+    void apply_IBB(const Lattice &lattice);
 
 
     /**
@@ -103,6 +103,9 @@ class Node
      * @brief Get the distribution function at index (direction) i.
      */
     inline double get_f(int i) const { return (*f)[i]; }
+
+    inline double get_ux() const { return ux; }
+    inline double get_uy() const { return uy; }
     
     /// @}
 

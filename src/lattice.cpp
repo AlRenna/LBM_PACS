@@ -7,6 +7,8 @@
 
 #include "lattice.hpp"
 
+// TODO: fare un nuovo costruttore che prende filename per geometria lattice, condizioni iniziali e al bordo
+
 Lattice::Lattice(unsigned int nx_, unsigned int ny_,
                  double nu_)
   : nx(nx_),
@@ -82,6 +84,7 @@ Lattice::populate_Nodes()
   for(unsigned int y = 0; y<ny; ++y){
     for(unsigned int x = 0; x<nx; ++x){
       unsigned int index = scalar_index(x, y);
+      // TODO: capire come inizializzare il file txt delle condizioni initiali considerando anche i nodi solidi
       nodes[index] = Node(node_types[index], {x, y}, ux_in[index], uy_in[index], rho_in[index]);
       nodes[index].set_boundary_node_properties(boundary_node_dir[index], boundary_node_delta[index], dt);
       nodes[index].init_equilibrium();
@@ -120,7 +123,7 @@ Lattice::run()
         if(node_types[index] != NodeType::solid)
         {
           if(node_types[index] == NodeType::boundary)
-            nodes[index].apply_IBB(); // BCs (zou he)
+            nodes[index].apply_IBB(*this); // BCs (zou he)
           
           nodes[index].compute_physical_quantities();
           // nodes[index].compute_integrals();
