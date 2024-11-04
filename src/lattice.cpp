@@ -8,6 +8,8 @@
 #include "lattice.hpp"
 
 // TODO: fare un nuovo costruttore che prende filename per geometria lattice, condizioni iniziali e al bordo
+// TODO: rivedere funzione per il salvataggio dei risultati
+// TODO: scrivi script per la lettura dei file .csv da python e crea un animazione
 
 Lattice::Lattice(unsigned int nx_, unsigned int ny_,
                  double nu_)

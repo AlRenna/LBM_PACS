@@ -19,7 +19,7 @@ int main(int argc, char **argv)
   int nx = 10;
   int ny = 10;
   // Create the lattice
-  Lattice lattice(10, 10, 0.1);
+  Lattice lattice(nx,ny, 0.1);
 
   std::vector<double> ux_in(nx*ny, 0.0);
   std::vector<double> uy_in(nx*ny, 0.0);
