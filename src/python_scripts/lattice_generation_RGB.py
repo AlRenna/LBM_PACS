@@ -23,11 +23,11 @@ def preprocess_image(image_path, cutoff_value=128):
 
     return r, g, b, grey
 
-def relative_cutoff_distance(image, coord1, coord2, x_spacing, y_spacing):
-    x1 = coord1[0] * x_spacing
-    y1 = coord1[1] * y_spacing
-    x2 = coord2[0] * x_spacing
-    y2 = coord2[1] * y_spacing
+def relative_cutoff_distance(image, coord1, coord2):
+    x1 = coord1[0]
+    y1 = coord1[1]
+    x2 = coord2[0] 
+    y2 = coord2[1] 
 
     if image[y1, x1] == image[y2, x2]:
         raise ValueError("Both coordinates are in the same region (both black or both white).")
@@ -36,14 +36,16 @@ def relative_cutoff_distance(image, coord1, coord2, x_spacing, y_spacing):
     total_distance = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
     # Traverse the line between the two points to find the cutoff point
-    num_steps = int(total_distance)
+    num_steps = int(80*total_distance)
     for step in range(num_steps + 1):
         t = step / num_steps
         x = int(x1 + t * (x2 - x1))
         y = int(y1 + t * (y2 - y1))
         if image[y, x] != image[y1, x1]:
-            cutoff_distance = np.sqrt((x - x1) ** 2 + (y - y1) ** 2)
-            return cutoff_distance / total_distance
+            # cutoff_distance = np.sqrt((x - x1) ** 2 + (y - y1) ** 2)
+            # print(f"Distance between points: ({x1}, {y1}) and ({x2}, {y2}) at ({x}, {y}): t = {t} \n\n")
+            return  t #cutoff_distance / total_distance
+        
 
     raise ValueError("No color change detected between the two coordinates.")
 
@@ -54,12 +56,20 @@ def remove_boundary_points_from_internal(internal_points_set, boundary_points_di
             internal_points_set.remove(point)
     return list(internal_points_set)
 
-def identify_boundary_points_and_distances(internal_points, external_points, x_spacing, y_spacing, image):
+def identify_boundary_points_and_distances(internal_points, external_points, num_points_x, num_points_y, image):
     boundary_points_distances = []
-    
 
     # Define the 8 possible directions (E, N, W, S, NE, NW, SW, SE)
     directions = [(1,0), (0,-1), (-1,0), (0,1), (1,-1), (-1,-1), (-1,1), (1,1)]
+
+    # Get image dimensions
+    height, width = image.shape
+    height = height - 1
+    width = width - 1
+
+    # Calculate the spacing between points (remove //)
+    x_spacing = width // (num_points_x - 1)
+    y_spacing = height // (num_points_y - 1)
 
     # Convert internal_points to a set for faster lookup
     internal_points_set = set(internal_points)
@@ -68,11 +78,19 @@ def identify_boundary_points_and_distances(internal_points, external_points, x_s
         x, y = ext_point
         for (dx, dy) in directions :
             distance = 0.0
-            adj_x, adj_y = x + dx, y + dy
-            if (adj_x, adj_y) in internal_points_set:
+
+            # Check if the adjacent point is internal
+            x_adj, y_adj = x + dx, y + dy
+            if (x_adj, y_adj) in internal_points_set:
+                #Convert to pixel coordinates
+                x_px = int(x * x_spacing) 
+                y_px = int(y * y_spacing) 
+                x_adj_px = int(x_adj * x_spacing) 
+                y_adj_px = int(y_adj * y_spacing) 
+
                 #internal_points_set.remove((adj_x, adj_y))
-                distance = relative_cutoff_distance(image, (adj_x,adj_y), (x,y), x_spacing, y_spacing,)
-                boundary_points_distances.append((adj_x, adj_y, -dx, -dy, distance))
+                distance = relative_cutoff_distance(image, (x_adj_px,y_adj_px), (x_px,y_px))
+                boundary_points_distances.append((x_adj, y_adj, -dx, -dy, distance))
 
     # Remove boundary points from internal points
     internal_points = remove_boundary_points_from_internal(internal_points_set, boundary_points_distances)
@@ -86,8 +104,10 @@ def classify_points(image_path, num_points_x, num_points_y):
     
     # Get image dimensions
     height, width = r.shape
+    height = height - 1
+    width = width - 1
 
-    # Calculate the spacing between points
+    # Calculate the spacing between points (remove //)
     x_spacing = width // (num_points_x - 1)
     y_spacing = height // (num_points_y - 1)
 
@@ -100,18 +120,18 @@ def classify_points(image_path, num_points_x, num_points_y):
     # Classify points
     for i in range(num_points_y):
         for j in range(num_points_x):
-            x = j * x_spacing
-            y = i * y_spacing
-            if r[y, x] == 255:  # Wall pixel
+            x_px = int(j * x_spacing) 
+            y_px = int(i * y_spacing) 
+            if r[y_px, x_px] == 255:  # Wall pixel
                 external_points.append((j, i))
-            if g[y, x] == 255:  # Inflow pixel
+            if g[y_px, x_px] == 255:  # Inflow pixel
                 inflow_points.append((j, i))
-            if b[y, x] == 255:  # Outflow pixel
+            if b[y_px, x_px] == 255:  # Outflow pixel
                 outflow_points.append((j, i))
-            if grey[y, x]  == 0:  # Fluid pixel
+            if grey[y_px, x_px]  == 0:  # Fluid pixel
                 internal_points.append((j, i))
             
-    return internal_points, external_points, inflow_points, outflow_points, x_spacing, y_spacing, r
+    return internal_points, external_points, inflow_points, outflow_points, r
 
 def create_csv_with_point_types_and_distances(internal_points, external_points, inflow_points, outflow_points, boundary_points_distances, num_points_x, num_points_y, output_csv_path):
     # Create a dictionary to store the type and distances for each point
@@ -153,13 +173,70 @@ def create_csv_with_point_types_and_distances(internal_points, external_points, 
                 else:
                     writer.writerow([j, i, 1] + [0.0] * 8)
 
+def draw_purple_squares(image_path, nx, ny, output_image_path):
+    # Load the image
+    image = cv2.imread(image_path)
+    if image is None:
+        raise ValueError("Image not found or unable to load.")
+    
+    # Get image dimensions
+    height, width, _ = image.shape
+    height = height - 1
+    width = width - 1
+
+    # Calculate the spacing between points (remove //)
+    x_spacing = width // (num_points_x - 1)
+    y_spacing = height // (num_points_y - 1)
+
+
+
+    # Define the size of the purple squares
+    square_size = 1
+
+    # Draw purple squares on the grid
+    for i in range(ny):
+        for j in range(nx):
+            x = int(j * x_spacing)
+            y = int(i * y_spacing)
+            top_left = (x - square_size // 2, y - square_size // 2)
+            bottom_right = (x + square_size // 2, y + square_size // 2)
+            cv2.rectangle(image, top_left, bottom_right, (255, 0, 255), -1)  # Purple color in BGR
+
+    # Save the modified image
+    cv2.imwrite(output_image_path, image)
+
+def adapt_nx_ny(image_path, nx, ny):
+    image = cv2.imread(image_path)
+    if image is None:
+        raise ValueError("Image not found or unable to load.")
+    
+    # Get image dimensions
+    height, width, _ = image.shape
+    height = height - 1
+    width = width - 1
+
+    # Calculate the spacing between points
+    x_spacing = width // (nx - 1)
+    y_spacing = height // (ny - 1)
+
+    nx = width // x_spacing + 1
+    ny = height // y_spacing + 1
+    
+    print(f"NEW nx: {nx}, ny: {ny}")
+    return nx, ny
+    
+
+
 # Example usage
 if __name__ == "__main__":
-    image_path = 'image.png'
-    num_points_x = 100
-    num_points_y = 100
-    internal_points, external_points, inflow_points, outflow_points, x_spacing, y_spacing, image = classify_points(image_path, num_points_x, num_points_y)
-    internal_points, boundary_points_distances = identify_boundary_points_and_distances(internal_points, external_points, x_spacing, y_spacing, image)
+    image_path = 'lid_driven.png'
+    num_points_x = 50
+    num_points_y = 50
+    num_points_x, num_points_y = adapt_nx_ny(image_path, num_points_x, num_points_y)
+    internal_points, external_points, inflow_points, outflow_points, image = classify_points(image_path, num_points_x, num_points_y)
+    internal_points, boundary_points_distances = identify_boundary_points_and_distances(internal_points, external_points, num_points_x, num_points_y, image)
     create_csv_with_point_types_and_distances(internal_points, external_points, inflow_points, outflow_points, boundary_points_distances, num_points_x, num_points_y, 'output.csv')
+    draw_purple_squares('lid_driven.png', num_points_x, num_points_x, 'output_with_purple_squares.png')
+
     print("CSV file created successfully.")
 
