@@ -106,6 +106,7 @@ class Node
 
     inline double get_ux() const { return ux; }
     inline double get_uy() const { return uy; }
+    inline double get_rho() const { return rho; }
     
     /// @}
 
