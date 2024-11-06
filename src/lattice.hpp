@@ -9,13 +9,13 @@
 #define __LATTICE_HPP__
 
 #include "node.hpp"
+#include <nlohmann/json.hpp>
 
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-
 
 #include <vector>
 #include <string>
@@ -143,9 +143,9 @@ class Lattice
     /// @{
 
     /// Lattice size (x)
-    const unsigned int nx;
+    unsigned int nx;
     /// Lattice size (y)
-    const unsigned int ny;
+    unsigned int ny;
 
     /// Nodes in the lattice
     std::vector<Node> nodes;
@@ -180,9 +180,9 @@ class Lattice
     /// @{
     
     /// Viscosity
-    const double nu; //= 1.0/6.0; 
+    double nu; //= 1.0/6.0; 
     // Relaxation time
-    const double tau; //= 3.0*nu+0.5;
+    double tau; //= 3.0*nu+0.5;
     /// @}
 
     /// @name Time parameters

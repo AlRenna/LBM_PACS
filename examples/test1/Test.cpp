@@ -21,16 +21,14 @@ int main(int argc, char **argv)
     run_terminal_python(script_path);
 
     
-    int nx = 50;
-    int ny = 50;
-    
     // Update nx and ny with the new values returned by the Python script
-    // nx = new_nx;
-    // ny = new_ny;
+   
 
     // Create the lattice
     std::cout << "Creating lattice" << std::endl;
-    Lattice lattice(nx, ny, 0.1);
+    Lattice lattice;
+    const int nx = lattice.get_nx();
+    const int ny = lattice.get_ny();
 
     std::vector<double> ux_in(nx*ny, 0.0);
     std::vector<double> uy_in(nx*ny, 0.0);

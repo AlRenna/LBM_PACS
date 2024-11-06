@@ -30,8 +30,26 @@ Lattice::Lattice(unsigned int nx_, unsigned int ny_,
   rho_out.resize(nx*ny, 1.0);
 }
 
-Lattice::lattice()
+Lattice::Lattice()
 {
+  std::ifstream param_file("params.json");
+  if (!param_file.is_open()) {
+    throw std::runtime_error("Could not open params.json");
+  }
+
+  nlohmann::json param_json;
+  param_file >> param_json;
+
+  if (param_json.find("new_nx") == param_json.end() || 
+      param_json.find("new_ny") == param_json.end() || 
+      param_json.find("nu") == param_json.end()) {
+    throw std::runtime_error("param.json does not contain required parameters");
+  }
+
+  nx = param_json["new_nx"];
+  ny = param_json["new_ny"];
+  nu = param_json["nu"];
+  tau = 3.0 * nu + 0.5;
   nodes.resize(nx*ny);
   node_types.resize(nx*ny, NodeType::solid);
   boundary_node_delta.resize(nx*ny, std::vector<double>(Node::dir, 0.0));
@@ -42,25 +60,6 @@ Lattice::lattice()
   ux_out.resize(nx*ny, 0.);
   uy_out.resize(nx*ny, 0.);
   rho_out.resize(nx*ny, 1.0);
-
-  std::ifstream param_file("param.json");
-  if (!param_file.is_open()) {
-    throw std::runtime_error("Could not open param.json");
-  }
-
-  nlohmann::json param_json;
-  param_file >> param_json;
-
-  if (param_json.find("nx") == param_json.end() || 
-      param_json.find("ny") == param_json.end() || 
-      param_json.find("nu") == param_json.end()) {
-    throw std::runtime_error("param.json does not contain required parameters");
-  }
-
-  nx = param_json["nx"];
-  ny = param_json["ny"];
-  nu = param_json["nu"];
-  tau = 3.0 * nu + 0.5;
 }
 
 void
