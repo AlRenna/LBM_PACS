@@ -1,10 +1,11 @@
 import cv2
 import numpy as np
 import csv
+import json 
 
 def preprocess_image(image_path, cutoff_value=128):
-    # Split the original image into its RGB components
 
+    # Split the original image into its RGB components and the greyscale image
     original_image = cv2.imread(image_path)
     if original_image is None:
         raise ValueError("Image not found or unable to load.")
@@ -15,11 +16,6 @@ def preprocess_image(image_path, cutoff_value=128):
     _, g = cv2.threshold(g, cutoff_value, 255, cv2.THRESH_BINARY)
     _, b = cv2.threshold(b, cutoff_value, 255, cv2.THRESH_BINARY)
     _, grey = cv2.threshold(grey, 30, 255, cv2.THRESH_BINARY)
-    # Save the RGB components as separate images
-    #cv2.imwrite(image_path.replace('.png', '_R.png'), r)
-    #cv2.imwrite(image_path.replace('.png', '_G.png'), g)
-    #cv2.imwrite(image_path.replace('.png', '_B.png'), b)
-    #cv2.imwrite(image_path.replace('.png', '_grey.png'), grey)
 
     return r, g, b, grey
 
@@ -98,8 +94,8 @@ def identify_boundary_points_and_distances(internal_points, external_points, num
     return internal_points, boundary_points_distances
 
 def classify_points(image_path, num_points_x, num_points_y):
-    # Load the image
-    # Preprocess the image to r,g,b
+    
+    # Preprocess the image to r,g,b adn greyscale each corresponding to wall, inflow, outflow and fluid pixels
     r,g,b,grey = preprocess_image(image_path)
     
     # Get image dimensions
@@ -185,10 +181,8 @@ def draw_purple_squares(image_path, nx, ny, output_image_path):
     width = width - 1
 
     # Calculate the spacing between points (remove //)
-    x_spacing = width // (num_points_x - 1)
-    y_spacing = height // (num_points_y - 1)
-
-
+    x_spacing = width // (nx - 1)
+    y_spacing = height // (ny - 1)
 
     # Define the size of the purple squares
     square_size = 1
@@ -223,20 +217,47 @@ def adapt_nx_ny(image_path, nx, ny):
     ny = height // y_spacing + 1
     
     print(f"NEW nx: {nx}, ny: {ny}")
-    return nx, ny
+
+    # Read the JSON file
+    with open('params.json', 'r') as file:
+        params = json.load(file)
     
+    # Update the JSON file with new values
+    params['new_nx'] = nx
+    params['new_ny'] = ny
+    
+    # Write the updated JSON file
+    with open('params.json', 'w') as file:
+        json.dump(params, file, indent=4)
+    
+    return nx, ny
 
+def read_params():
+    # Read the JSON file
+    with open('params.json', 'r') as file:
+        params = json.load(file)
+    
+    # Extract the variables
+    image_path = params['image_path']
+    num_points_x = params['nx']
+    num_points_y = params['ny']
+    
+    return image_path, num_points_x, num_points_y
 
-# Example usage
-if __name__ == "__main__":
-    image_path = 'lid_driven.png'
-    num_points_x = 50
-    num_points_y = 50
+def main():
+    image_path, num_points_x, num_points_y = read_params()
     num_points_x, num_points_y = adapt_nx_ny(image_path, num_points_x, num_points_y)
     internal_points, external_points, inflow_points, outflow_points, image = classify_points(image_path, num_points_x, num_points_y)
     internal_points, boundary_points_distances = identify_boundary_points_and_distances(internal_points, external_points, num_points_x, num_points_y, image)
     create_csv_with_point_types_and_distances(internal_points, external_points, inflow_points, outflow_points, boundary_points_distances, num_points_x, num_points_y, 'output.csv')
-    draw_purple_squares('lid_driven.png', num_points_x, num_points_x, 'output_with_purple_squares.png')
+    draw_purple_squares(image_path, num_points_x, num_points_y, 'output_with_purple_squares.png')
+    return num_points_x, num_points_y
 
-    print("CSV file created successfully.")
+if __name__ == "__main__":
+    #image_path = 'lid_driven.png'
+    #num_points_x = 50
+    #num_points_y = 50
+    nx, ny = main()
+    print(f"CSV file created successfully with nx: {nx}, ny: {ny}")
+
 
