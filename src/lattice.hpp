@@ -10,8 +10,13 @@
 
 #include "node.hpp"
 
+#include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <sstream>
+#include <stdexcept>
+
+
 #include <vector>
 #include <string>
 #include <memory>
@@ -73,6 +78,13 @@ class Lattice
    * @brief Run the simulation by iterating over time and over the lattice nodes
    */
   void run();
+
+  /**
+   * @brief Function to write the results of the simulation to a file .
+   * 
+   * @param iter Current iteration
+   */
+  void writeResults(const unsigned int iter);
 
 
 
