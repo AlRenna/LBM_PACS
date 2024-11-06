@@ -5,35 +5,45 @@
  * @author Mattia Marzotto <mattia.marzotto@mail.polimi.it>
  */
 
+// #include <Python.h>
 #include "../../src/lattice.hpp"
 #include "../../src/utils_python.cpp"
 
+#include <iostream> 
+#include <stdexcept>
 
 int main(int argc, char **argv)
 {
-  // TODO: Modificare script python per far si che i valori di nx e ny vengano presi dal file cpp o da un file di testo
-  // TODO: creare un file cpp o python che generi un file .txt contente i valori iniziali e altri parametri necessari all'esecuzione
-  // Run the python script to generate the lattice
-  run_terminal_python();//{"source env/bin/activate","python3 generate_lattice_RGB.py", "deactivate" });
+    // Path to the python script to preprocess the image and classify the nodes
+    std::string script_path = "../../src/python_scripts/lattice_generation_RGB.py";
+    
+    std::cout << "Running python script" << std::endl;
+    run_terminal_python(script_path);
 
-  int nx = 10;
-  int ny = 10;
-  // Create the lattice
-  Lattice lattice(nx,ny, 0.1);
+    
+    int nx = 50;
+    int ny = 50;
+    
+    // Update nx and ny with the new values returned by the Python script
+    // nx = new_nx;
+    // ny = new_ny;
 
-  std::vector<double> ux_in(nx*ny, 0.0);
-  std::vector<double> uy_in(nx*ny, 0.0);
-  std::vector<double> rho_in(nx*ny, 1.0);
+    // Create the lattice
+    std::cout << "Creating lattice" << std::endl;
+    Lattice lattice(nx, ny, 0.1);
 
-  for (int i = 0; i < nx; ++i)
-  {
-    ux_in[i] = 0.1;
-  }
-  // Set the initial and boundary conditions
-  lattice.load_ICs_and_BCs(ux_in, uy_in, rho_in, "output.csv");
+    std::vector<double> ux_in(nx*ny, 0.0);
+    std::vector<double> uy_in(nx*ny, 0.0);
+    std::vector<double> rho_in(nx*ny, 1.0);
 
-  // Run the simulation
-  lattice.run();
+    for (int i = 0; i < nx; ++i) {
+        ux_in[i] = 0.1;
+    }
+    // Set the initial and boundary conditions
+    lattice.load_ICs_and_BCs(ux_in, uy_in, rho_in, "output.csv");
 
-  return 0;
+    // Run the simulation
+    lattice.run();
+
+    return 0;
 }

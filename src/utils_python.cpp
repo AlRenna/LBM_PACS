@@ -12,19 +12,12 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <vector>
 
-inline void run_terminal_command(const std::string& command) {
+inline void run_terminal_python(std::string script_path) {
+    std::string command = {"python3 " + script_path};
     int result = system(command.c_str());
     if (result != 0) {
-        std::cerr << "Command failed with exit code: " << result << std::endl;
-    }
-}
-
-inline void run_terminal_python() {
-    const std::vector<std::string> commands_ = {"python3 ../../src/python_scripts/lattice_generation_RGB.py"};
-    for (const auto &command : commands_){
-        run_terminal_command(command);
+        std::cerr << "Pyhton terminal command failed with exit code: " << result << std::endl;
     }
 }
 
