@@ -49,6 +49,8 @@ class Lattice
   Lattice(unsigned int nx_, unsigned int ny_,
           double nu_);
 
+  Lattice();
+
   /**
    * @brief Function to set the initial and boundary conditions.
    * The function must be called from the main function before running the simulation so 
