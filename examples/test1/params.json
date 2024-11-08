@@ -1,0 +1,6 @@
+{
+    "image_path": "lid_driven_high_res.png",
+    "nx": 400,
+    "ny": 500,
+    "nu": 0.1
+}

@@ -8,3 +8,6 @@ add_executable(test1 ${TEST1_SOURCES})
 
 # Link the executable with the main library
 target_link_libraries(test1 LatticeLib)
+
+# Copy params.json to the build directory
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/params.json DESTINATION ${CMAKE_BINARY_DIR}/examples/test1)

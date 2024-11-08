@@ -34,9 +34,11 @@ int main(int argc, char **argv)
     std::vector<double> uy_in(nx*ny, 0.0);
     std::vector<double> rho_in(nx*ny, 1.0);
 
-    for (int i = 0; i < nx; ++i) {
-        ux_in[i] = 0.1;
-    }
+    // for (int i = 0; i < nx; ++i) {
+    //     ux_in[i] = 0.1;
+    // }
+
+    ux_in = lid_driven(0.1, nx, ny, "output.csv");
     // Set the initial and boundary conditions
     lattice.load_ICs_and_BCs(ux_in, uy_in, rho_in, "output.csv");
 

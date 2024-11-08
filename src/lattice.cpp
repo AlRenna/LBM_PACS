@@ -43,7 +43,7 @@ Lattice::Lattice()
   if (param_json.find("new_nx") == param_json.end() || 
       param_json.find("new_ny") == param_json.end() || 
       param_json.find("nu") == param_json.end()) {
-    throw std::runtime_error("param.json does not contain required parameters");
+    throw std::runtime_error("params    wsl --update.json does not contain required parameters");
   }
 
   nx = param_json["new_nx"];
