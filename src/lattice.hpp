@@ -154,7 +154,7 @@ class Lattice
     /// Directions in which the BCs are to be applied for each boundary node 
     std::vector<std::vector<bool>> boundary_node_dir;
     /// Distances between the node and the wall along the direction of boundary_node_dir for each boundary node
-        std::vector<std::vector<double>> boundary_node_delta;
+    std::vector<std::vector<double>> boundary_node_delta;
 
     /// @}
 

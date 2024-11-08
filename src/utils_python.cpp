@@ -5,9 +5,10 @@
  * @author Mattia Marzotto <mattia.marzotto@mail.polimi.it>
  */
 
-//TODO: Come richiamare le funzioni .py da C++?
-//TODO: Come passare i risultati delle funzioni .py a C++?
-//TODO: Quando fai make, crea una copia dei file python nella cartella build
+//: Come richiamare le funzioni .py da C++?
+//: Come passare i risultati delle funzioni .py a C++?
+
+//TODO: Quando fai make (non cmake), crea una copia dei file python nella cartella build
 //TODO: pulire codice .py
 
 #include <cstdlib>
