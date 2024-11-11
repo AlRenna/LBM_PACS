@@ -44,7 +44,25 @@ def create_3d_arrays(ux_data, uy_data, rho_data, nx, ny):
     
     return velocity, velocity_mag, rho
 
+# def animate_array(array, title):
+#     fig, ax = plt.subplots()
+#     cax = ax.imshow(array[:, :, 0], cmap='viridis')
+#     fig.colorbar(cax)
+#     ax.set_title(title)
+    
+#     def update(frame):
+#         cax.set_array(array[:, :, frame])
+#         return cax,
+    
+#     ani = FuncAnimation(fig, update, frames=array.shape[2], blit=True)
+#     plt.show()
+
 def animate_array(array, title):
+    output_folder = "output_animations"
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    
+    output_file = os.path.join(output_folder, title + '.mp4')
     fig, ax = plt.subplots()
     cax = ax.imshow(array[:, :, 0], cmap='viridis')
     fig.colorbar(cax)
@@ -55,7 +73,10 @@ def animate_array(array, title):
         return cax,
     
     ani = FuncAnimation(fig, update, frames=array.shape[2], blit=True)
-    plt.show()
+    
+    # Save the animation to a file
+    ani.save(output_file, writer='ffmpeg')
+    print(f"Animation saved in {output_file}")
 
 def read_params():
     # Read the JSON file
@@ -79,7 +100,7 @@ def main(directory, nx, ny):
     animate_array(rho, 'Rho Animation')
 
 if __name__ == "__main__":
-    directory = input("Enter the directory containing the CSV files: ")
+    directory = "output_results" # input("Enter the directory containing the CSV files: ")
     nx, ny = read_params() 
     
     main(directory, nx, ny)
