@@ -70,6 +70,9 @@ Lattice::load_ICs_and_BCs(const std::vector<double>& ux_in_,
   ux_in = ux_in_;
   uy_in = uy_in_;
   rho_in = rho_in_;
+  ux_out = ux_in;
+  uy_out = uy_in;
+  rho_out = rho_in;
   readNodesFromCSV(filename_nodes);
 
   // Populate the nodes
@@ -138,7 +141,9 @@ Lattice::run()
 {
   std::cout << "Running simulation\n" << std::endl;
   unsigned int iter = 0;
-  while(iter < max_iter)
+  writeResults(iter);
+  iter = iter + 1;
+  while(iter <= max_iter)
   {
     std::cout << "Iteration: " << iter << std::endl;
     std::cout << "Time: " << iter*dt << std::endl;
@@ -185,10 +190,10 @@ Lattice::run()
       }
     }
 
-    std::cout << "Writing results" << std::endl;
-    if( iter%5 == 0 || iter == max_iter-1)
+    // save the results every 5 iterations
+    if( iter%1 == 0 || iter == max_iter-1)
     {
-    // save the 
+      std::cout << "Writing results" << std::endl;
       writeResults(iter);
     }
     iter = iter + 1;

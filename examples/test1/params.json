@@ -1,7 +1,7 @@
 {
     "image_path": "lid_driven.png",
-    "nx": 400,
-    "ny": 500,
+    "nx": 10,
+    "ny": 10,
     "nu": 0.1,
     "dt": 1e-3,
     "max_iter": 100

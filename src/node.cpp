@@ -45,16 +45,12 @@ void
 Node::init_equilibrium()
 {
   // initialize f to equilibrium distribution (only at step 0)
-
-  std::vector<double> w_rho = rho * weights;
-  double omusq = 1.0 - 1.5*(ux*ux+uy*uy);
-  
-  double tu = 3.0*ux;
-  double tv = 3.0*uy;
+  // f_i = w_i * rho * (1  + 3 * (c_i.u) + 4.5 * (c_i.u)^2 - 1.5 * u^2)
 
   for(unsigned int i = 0; i<dir; ++i){
-    (*f)[i] = w_rho[i]*(omusq + 
-            (coeff[i][0]*tu + coeff[i][1]*tv)*(1.0+0.5*(coeff[i][0]*tu + coeff[i][1]*tv)));
+    (*f)[i] = weights[i] * rho * (1. + 3.0 * (coeff[i][0] * ux + coeff[i][1] * uy) + 
+              4.5 * (coeff[i][0] * ux + coeff[i][1] * uy) * (coeff[i][0] * ux + coeff[i][1] * uy) - 
+              1.5 * (ux * ux + uy * uy));
   }
 }
 
@@ -62,23 +58,19 @@ void
 Node::collide(const Lattice &lattice)
 {
   double tau = lattice.get_tau();
-  const double tauinv = 1./tau; // 1/tau
+  double dt = lattice.get_dt();
+  const double tauinv = dt/tau; // dt/tau
   const double omtauinv = 1.0-tauinv;     // 1 - 1/tau
   
   // Collision and streaming step: now compute and relax to equilibrium 
   // BGK collision operator
-  // f_i(t+dt) = f_i(t) - 1/tau (f_i(t) - f_i^eq(t))
+  // f_i(t+dt) = f_i(t) - dt/tau (f_i(t) - f_i^eq(t))
 
-  // temporary variables
-  std::vector<double> w_tau_rho = weights*rho*tauinv;
-  double omusq = 1.0 - 1.5*(ux*ux+uy*uy); // 1-(3/2)u.u
-  
-  double tu = 3.0*ux;
-  double tv = 3.0*uy;
   double f_eq = 0.0;
   for(unsigned int i = 0; i<9; ++i){
-    f_eq = w_tau_rho[i]*(omusq + 
-            (coeff[i][0]*tu + coeff[i][1]*tv)*(1.0+0.5*(coeff[i][0]*tu + coeff[i][1]*tv)));
+    f_eq =  weights[i] * rho * (1. + 3.0 * (coeff[i][0] * ux + coeff[i][1] * uy) + 
+            4.5 * (coeff[i][0] * ux + coeff[i][1] * uy) * (coeff[i][0] * ux + coeff[i][1] * uy) - 
+            1.5 * (ux * ux + uy * uy));
     (*f)[i] = omtauinv * (*f)[i] + tauinv * f_eq;
     }
 }
@@ -112,7 +104,7 @@ Node::apply_IBB(const Lattice &lattice)
                       (1. / (2 * boundary_node_delta[i]) * (*f)[i] + 
                       ((2 * boundary_node_delta[i] - 1.) / (2 * boundary_node_delta[i])) * (*f)[bb_indexes[i]]) *
                       (boundary_node_delta[i] >= 0.5) - 
-                      (ux_wall * coeff[i][0] + uy_wall * coeff[i][1]) * weights[i] * rho * 6; // Wall velocity term
+                      (ux_wall * coeff[i][0] + uy_wall * coeff[i][1]) * weights[i] * 6; // Wall velocity term (rho)
     }
   }
 }
@@ -181,7 +173,7 @@ Node::set_boundary_node_properties(std::vector<bool> boundary_node_dir_,
   // Evaluate q_i = d_i / (|C_i| * dt) weighted distance by direction
   for(unsigned int i = 1; i<dir; ++i){
     if(boundary_node_dir[i]){
-      boundary_node_delta[i] = boundary_node_delta[i] / (std::sqrt(coeff[i][0]*coeff[i][0] + coeff[i][1]*coeff[i][1]) * dt);
+      boundary_node_delta[i] = boundary_node_delta[i];
     }
   }
 }

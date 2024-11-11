@@ -11,7 +11,7 @@ def read_txt_files(directory):
     uy_files = sorted([f for f in os.listdir(directory) if f.startswith('uy_out_') and f.endswith('.txt')])
     rho_files = sorted([f for f in os.listdir(directory) if f.startswith('rho_out_') and f.endswith('.txt')])
     print("Loading files ...........")
-    print(ux_files)
+    # print(ux_files)
     ux_data = [np.loadtxt(os.path.join(directory, f), delimiter=',') for f in ux_files]
     uy_data = [np.loadtxt(os.path.join(directory, f), delimiter=',') for f in uy_files]
     rho_data = [np.loadtxt(os.path.join(directory, f), delimiter=',') for f in rho_files]
@@ -64,7 +64,8 @@ def animate_array(array, title):
     
     output_file = os.path.join(output_folder, title + '.mp4')
     fig, ax = plt.subplots()
-    cax = ax.imshow(array[:, :, 0], cmap='viridis')
+    max = np.max(np.abs(array))
+    cax = ax.imshow(array[:, :, 0], cmap='jet')
     fig.colorbar(cax)
     ax.set_title(title)
     

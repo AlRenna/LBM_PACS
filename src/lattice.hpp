@@ -118,6 +118,9 @@ class Lattice
   
   /// Get the relaxaion time 
   inline double get_tau() const { return tau; }
+
+  /// Get the time_step
+  inline double get_dt() const { return dt; }
   
   /**
    * @brief Get the (const) node object given the 2D coordinates.
