@@ -59,7 +59,7 @@ Node::collide(const Lattice &lattice)
 {
   double tau = lattice.get_tau();
   double dt = lattice.get_dt();
-  const double tauinv = dt/tau; // dt/tau
+  const double tauinv = dt/tau; // TODO: dt/tau? in the other code is 1./tau
   const double omtauinv = 1.0-tauinv;     // 1 - 1/tau
   
   // Collision and streaming step: now compute and relax to equilibrium 

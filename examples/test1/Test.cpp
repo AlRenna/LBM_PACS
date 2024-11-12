@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     std::vector<double> rho_in(nx*ny, 1.0);
 
     // Set the lid driven boundary condition on the upper wall
-    // ux_in = lid_driven(10, nx, ny, "output.csv");
+    ux_in = lid_driven(10, nx, ny, "output.csv");
 
     // Set the initial and boundary conditions
     lattice.load_ICs_and_BCs(ux_in, uy_in, rho_in, "output.csv");

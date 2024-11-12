@@ -44,18 +44,6 @@ def create_3d_arrays(ux_data, uy_data, rho_data, nx, ny):
     
     return velocity, velocity_mag, rho
 
-# def animate_array(array, title):
-#     fig, ax = plt.subplots()
-#     cax = ax.imshow(array[:, :, 0], cmap='viridis')
-#     fig.colorbar(cax)
-#     ax.set_title(title)
-    
-#     def update(frame):
-#         cax.set_array(array[:, :, frame])
-#         return cax,
-    
-#     ani = FuncAnimation(fig, update, frames=array.shape[2], blit=True)
-#     plt.show()
 
 def animate_array(array, title):
     output_folder = "output_animations"
@@ -63,17 +51,16 @@ def animate_array(array, title):
         os.makedirs(output_folder)
     
     output_file = os.path.join(output_folder, title + '.mp4')
-    fig, ax = plt.subplots()
-    max = np.max(np.abs(array))
-    cax = ax.imshow(array[:, :, 0], cmap='jet')
-    fig.colorbar(cax)
-    ax.set_title(title)
+    max_val = np.max(np.abs(array))
     
     def update(frame):
-        cax.set_array(array[:, :, frame])
-        return cax,
+        plt.clf()
+        plt.imshow(array[:, :, frame], origin='upper', cmap='RdBu_r', interpolation='spline16', vmin=0, vmax=10)
+        plt.colorbar()
+        plt.title(title)
     
-    ani = FuncAnimation(fig, update, frames=array.shape[2], blit=True)
+    
+    ani = FuncAnimation(plt.figure(), update, frames=array.shape[2], interval=100)
     
     # Save the animation to a file
     ani.save(output_file, writer='ffmpeg')

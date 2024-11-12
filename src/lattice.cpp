@@ -173,9 +173,10 @@ Lattice::run()
         unsigned int index = scalar_index(x, y);
         if(node_types[index] != NodeType::solid)
         {
-          if(node_types[index] == NodeType::boundary)
-            nodes[index].apply_IBB(*this); // BCs (zou he)
-          
+          if(node_types[index] == NodeType::boundary){
+            nodes[index].apply_IBB(*this); // BCs
+            nodes[index].stream(*this); // TODO: check
+          }
           nodes[index].compute_physical_quantities();
           // nodes[index].compute_integrals();
 
@@ -191,7 +192,7 @@ Lattice::run()
     }
 
     // save the results every 5 iterations
-    if( iter%1 == 0 || iter == max_iter-1)
+    if( iter%20 == 0 || iter == max_iter-1)
     {
       std::cout << "Writing results" << std::endl;
       writeResults(iter);
@@ -241,45 +242,4 @@ Lattice::writeResults(const unsigned int iter) {
     }
   }
   rho_file.close();
-
-  // // Create XDMF file
-  // std::string xdmf_filename = "output_results/output_" + iter_str + ".xdmf";
-  // std::ofstream xdmf_file(xdmf_filename);
-  // xdmf_file << "<?xml version=\"1.0\" ?>\n";
-  // xdmf_file << "<!DOCTYPE Xdmf SYSTEM \"Xdmf.dtd\" []>\n";
-  // xdmf_file << "<Xdmf Version=\"2.0\">\n";
-  // xdmf_file << "  <Domain>\n";
-  // xdmf_file << "    <Grid Name=\"LBM Grid\" GridType=\"Uniform\">\n";
-  // xdmf_file << "      <Time Value=\"" << curr_time_step << "\"/>\n";
-  // xdmf_file << "      <Topology TopologyType=\"2DCoRectMesh\" Dimensions=\"" << ny << " " << nx << "\"/>\n";
-  // xdmf_file << "      <Geometry GeometryType=\"ORIGIN_DXDY\">\n";
-  // xdmf_file << "        <DataItem Dimensions=\"2\" NumberType=\"Float\" Precision=\"8\" Format=\"XML\">\n";
-  // xdmf_file << "          0.0 0.0\n"; // Origin
-  // xdmf_file << "        </DataItem>\n";
-  // xdmf_file << "        <DataItem Dimensions=\"2\" NumberType=\"Float\" Precision=\"8\" Format=\"XML\">\n";
-  // xdmf_file << "          1.0 1.0\n"; // Spacing
-  // xdmf_file << "        </DataItem>\n";
-  // xdmf_file << "      </Geometry>\n";
-  // // Write ux
-  // xdmf_file << "      <Attribute Name=\"ux\" AttributeType=\"Scalar\" Center=\"Node\">\n";
-  // xdmf_file << "        <DataItem Dimensions=\"" << ny << " " << nx << "\" NumberType=\"Float\" Precision=\"8\" Format=\"CSV\">\n";
-  // xdmf_file << "          " << ux_filename << "\n";
-  // xdmf_file << "        </DataItem>\n";
-  // xdmf_file << "      </Attribute>\n";
-  // // Write uy
-  // xdmf_file << "      <Attribute Name=\"uy\" AttributeType=\"Scalar\" Center=\"Node\">\n";
-  // xdmf_file << "        <DataItem Dimensions=\"" << ny << " " << nx << "\" NumberType=\"Float\" Precision=\"8\" Format=\"CSV\">\n";
-  // xdmf_file << "          " << uy_filename << "\n";
-  // xdmf_file << "        </DataItem>\n";
-  // xdmf_file << "      </Attribute>\n";
-  // // Write rho
-  // xdmf_file << "      <Attribute Name=\"rho\" AttributeType=\"Scalar\" Center=\"Node\">\n";
-  // xdmf_file << "        <DataItem Dimensions=\"" << ny << " " << nx << "\" NumberType=\"Float\" Precision=\"8\" Format=\"CSV\">\n";
-  // xdmf_file << "          " << rho_filename << "\n";
-  // xdmf_file << "        </DataItem>\n";
-  // xdmf_file << "      </Attribute>\n";
-  // xdmf_file << "    </Grid>\n";
-  // xdmf_file << "  </Domain>\n";
-  // xdmf_file << "</Xdmf>\n";
-  // xdmf_file.close();
 }
