@@ -114,7 +114,7 @@ Lattice::readNodesFromCSV(const std::string& filename) {
       std::getline(ss, token, ',');
       double value = std::stod(token);
       boundary_node_delta[index][i] = value;
-      boundary_node_dir[index][i] = (value > 0.0);
+      boundary_node_dir[index][i] = (value > std::numeric_limits<double>::epsilon());
     }
   }
 
@@ -174,8 +174,7 @@ Lattice::run()
         if(node_types[index] != NodeType::solid)
         {
           if(node_types[index] == NodeType::boundary){
-            nodes[index].apply_IBB(*this); // BCs
-            nodes[index].stream(*this); // TODO: check
+            nodes[index].apply_IBB(*this);
           }
           nodes[index].compute_physical_quantities();
           // nodes[index].compute_integrals();
@@ -192,7 +191,7 @@ Lattice::run()
     }
 
     // save the results every 5 iterations
-    if( iter%20 == 0 || iter == max_iter-1)
+    if( iter%1 == 0 || iter == max_iter-1)
     {
       std::cout << "Writing results" << std::endl;
       writeResults(iter);

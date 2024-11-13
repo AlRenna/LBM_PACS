@@ -21,9 +21,9 @@ Node::weights = {4./9.,
 
 const std::vector<std::vector<double>> 
 Node::coeff = {{0., 0.},
-              {1., 0.}, {-1., 0.}, {0., 1.}, {0., -1.},
-              {1., 1.}, {-1., -1.}, {-1., 1.}, {1., -1.}};
-
+              {1., 0.}, {0., -1.}, {-1., 0.}, {0., 1.},
+              {1., -1.}, {-1., -1.}, {-1., 1.}, {1., 1.}};
+// 0 1 2 3 4 5 6 7 8 
 const std::vector<int> 
 Node::bb_indexes = {0, 3, 4, 1, 2, 7, 8, 5, 6};
 
@@ -59,8 +59,8 @@ Node::collide(const Lattice &lattice)
 {
   double tau = lattice.get_tau();
   double dt = lattice.get_dt();
-  const double tauinv = dt/tau; // TODO: dt/tau? in the other code is 1./tau
-  const double omtauinv = 1.0-tauinv;     // 1 - 1/tau
+  const double tauinv = 1./tau;   
+  const double omtauinv = 1.0-tauinv;
   
   // Collision and streaming step: now compute and relax to equilibrium 
   // BGK collision operator
@@ -98,7 +98,8 @@ Node::apply_IBB(const Lattice &lattice)
       // f_adj_post_coll = lattice.get_node(x_adg, y_adg).get_f(i);
       f_adj_post_coll = (*f_adj)[i]; 
       
-      (*f)[bb_indexes[i]] = (2 * boundary_node_delta[i] * (*f)[i] + 
+      // TODO: is not f but f_adj since we are post collision and stream (this value must be kept in the boundary node)
+      (*f_adj)[bb_indexes[i]] = (2 * boundary_node_delta[i] * (*f)[i] + 
                       (1 - 2 * boundary_node_delta[i]) * f_adj_post_coll) * 
                       (boundary_node_delta[i] < 0.5) +
                       (1. / (2 * boundary_node_delta[i]) * (*f)[i] + 
@@ -129,6 +130,7 @@ Node::stream(Lattice& lattice)
       x_adg = x + coeff[i][0];
       y_adg = y + coeff[i][1];
       lattice.get_node(x_adg, y_adg).set_f_adj(i, (*f)[i]);
+      std::cout << "Streaming: " << x << " " << y << " in " << x_adg << " " << y_adg << " :" << (*f)[i] << std::endl;
     }
   }
 }
