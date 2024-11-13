@@ -85,6 +85,8 @@ class Node
      */
     void apply_IBB(const Lattice &lattice);
 
+    void apply_BB(const Lattice &lattice);
+
 
     /**
      * @brief Compute the physical quantities (velocity components and density) from the distribution functions.

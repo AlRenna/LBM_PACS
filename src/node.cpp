@@ -111,6 +111,27 @@ Node::apply_IBB(const Lattice &lattice)
 }
 
 void
+Node::apply_BB(const Lattice &lattice)
+{
+  unsigned int x_adg = 0;
+  unsigned int y_adg = 0;
+  double ux_wall = 0.;
+  double uy_wall = 0.;
+
+  for(unsigned int i = 1; i<dir; ++i){
+    if(boundary_node_dir[i]){
+      x_adg = coord[0] + coeff[i][0];
+      y_adg = coord[1] + coeff[i][1];
+      ux_wall = lattice.get_node(x_adg, y_adg).get_ux();
+      uy_wall = lattice.get_node(x_adg, y_adg).get_uy();
+
+      (*f_adj)[bb_indexes[i]] = (*f)[i] - 
+                      (ux_wall * coeff[i][0] + uy_wall * coeff[i][1]) * rho * weights[i] * 6;
+    }
+  }
+}
+
+void
 Node::stream(Lattice& lattice)
 {
   // direction numbering scheme
@@ -130,7 +151,7 @@ Node::stream(Lattice& lattice)
       x_adg = x + coeff[i][0];
       y_adg = y + coeff[i][1];
       lattice.get_node(x_adg, y_adg).set_f_adj(i, (*f)[i]);
-      std::cout << "Streaming: " << x << " " << y << " in " << x_adg << " " << y_adg << " :" << (*f)[i] << std::endl;
+      // std::cout << "Streaming: " << x << " " << y << " in " << x_adg << " " << y_adg << " :" << (*f)[i] << std::endl;
     }
   }
 }
@@ -172,10 +193,4 @@ Node::set_boundary_node_properties(std::vector<bool> boundary_node_dir_,
 {
   boundary_node_dir = boundary_node_dir_;
   boundary_node_delta = boundary_node_delta_;
-  // Evaluate q_i = d_i / (|C_i| * dt) weighted distance by direction
-  for(unsigned int i = 1; i<dir; ++i){
-    if(boundary_node_dir[i]){
-      boundary_node_delta[i] = boundary_node_delta[i];
-    }
-  }
 }

@@ -55,7 +55,7 @@ def animate_array(array, title):
     
     def update(frame):
         plt.clf()
-        plt.imshow(array[:, :, frame], origin='upper', cmap='RdBu_r', interpolation='spline16', vmin=0, vmax=10)
+        plt.imshow(array[:, :, frame], origin='upper', cmap='RdBu_r', interpolation='spline16', vmin=0, vmax=2)
         plt.colorbar()
         plt.title(title)
     

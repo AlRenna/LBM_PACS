@@ -155,9 +155,11 @@ Lattice::run()
         unsigned int index = scalar_index(x, y);
         if(node_types[index] != NodeType::solid)
         {
-          
-          // nodes[index].apply_bc(); // inlet e BCs (zou he)
           nodes[index].collide(*this);
+          // if(node_types[index] == NodeType::boundary)
+          // {
+          //   nodes[index].apply_BB(*this);
+          // }
           nodes[index].stream(*this);
         }
       }
@@ -176,22 +178,22 @@ Lattice::run()
           if(node_types[index] == NodeType::boundary){
             nodes[index].apply_IBB(*this);
           }
+          nodes[index].update_f();
+
           nodes[index].compute_physical_quantities();
           // nodes[index].compute_integrals();
 
-          // nodes[index].save(*this);
-          // TODO: scrivere nelle variabili di output le quantità fisiche
           ux_out[index] = nodes[index].get_ux();
           uy_out[index] = nodes[index].get_uy();
           rho_out[index] = nodes[index].get_rho();
 
-          nodes[index].update_f();          
+                    
         }
       }
     }
 
     // save the results every 5 iterations
-    if( iter%1 == 0 || iter == max_iter-1)
+    if( iter%50 == 0 || iter == max_iter-1)
     {
       std::cout << "Writing results" << std::endl;
       writeResults(iter);
