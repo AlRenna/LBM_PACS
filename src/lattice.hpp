@@ -86,8 +86,7 @@ class Lattice
    * 
    * @param iter Current iteration
    */
-  void writeResults(const unsigned int iter);
-
+  void writeResults(std::ofstream &file_u, std::ofstream &file_rho);
 
 
   /// @name Utility functions

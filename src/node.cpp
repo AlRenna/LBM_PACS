@@ -98,7 +98,6 @@ Node::apply_IBB(const Lattice &lattice)
       // f_adj_post_coll = lattice.get_node(x_adg, y_adg).get_f(i);
       f_adj_post_coll = (*f_adj)[i]; 
       
-      // TODO: is not f but f_adj since we are post collision and stream (this value must be kept in the boundary node)
       (*f_adj)[bb_indexes[i]] = (2 * boundary_node_delta[i] * (*f)[i] + 
                       (1 - 2 * boundary_node_delta[i]) * f_adj_post_coll) * 
                       (boundary_node_delta[i] < 0.5) +

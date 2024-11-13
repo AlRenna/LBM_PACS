@@ -5,44 +5,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-def read_txt_files(directory):
-    print("Sorting files ...........")
-    ux_files = sorted([f for f in os.listdir(directory) if f.startswith('ux_out_') and f.endswith('.txt')])
-    uy_files = sorted([f for f in os.listdir(directory) if f.startswith('uy_out_') and f.endswith('.txt')])
-    rho_files = sorted([f for f in os.listdir(directory) if f.startswith('rho_out_') and f.endswith('.txt')])
-    print("Loading files ...........")
-    # print(ux_files)
-    ux_data = [np.loadtxt(os.path.join(directory, f), delimiter=',') for f in ux_files]
-    uy_data = [np.loadtxt(os.path.join(directory, f), delimiter=',') for f in uy_files]
-    rho_data = [np.loadtxt(os.path.join(directory, f), delimiter=',') for f in rho_files]
-    
-    return ux_data, uy_data, rho_data
+# TODO: figure out how add a filter for wall and obstacle cells
 
-# def create_3d_arrays(ux_data, uy_data, rho_data, nx, ny):
-#     T = len(ux_data)
-#     velocity = np.zeros((nx, ny, T, 2))  # 4D array to store velocity components
-#     rho = np.zeros((nx, ny, T))
+def read_file_to_array(filename, nx, ny):
+    with open(filename, 'r') as file:
+        lines = file.readlines()
     
-#     for t in range(T):
-#         velocity[:, :, t, 0] = ux_data[t].values.reshape((nx, ny))
-#         velocity[:, :, t, 1] = uy_data[t].values.reshape((nx, ny))
-#         rho[:, :, t] = rho_data[t].values.reshape((nx, ny))
+    t = len(lines)
+    data_array = np.zeros((nx, ny, t))
     
-#     return velocity, rho
-
-def create_3d_arrays(ux_data, uy_data, rho_data, nx, ny):
-    T = len(ux_data)
-    velocity = np.zeros((nx, ny, T, 2))  # 4D array to store velocity components
-    velocity_mag = np.zeros((nx, ny, T))  
-    rho = np.zeros((nx, ny, T))
+    for i, line in enumerate(lines):
+        values = list(map(float, line.split()))
+        data_array[:, :, i] = np.array(values).reshape((nx, ny))
     
-    for t in range(T):
-        velocity[:, :, t, 0] = ux_data[t].reshape((nx, ny))
-        velocity[:, :, t, 1] = uy_data[t].reshape((nx, ny))
-        velocity_mag[:, :, t] = np.sqrt(ux_data[t].reshape((nx, ny))**2 +  uy_data[t].reshape((nx, ny))**2)
-        rho[:, :, t] = rho_data[t].reshape((nx, ny))
-    
-    return velocity, velocity_mag, rho
+    return data_array
 
 
 def animate_array(array, title):
@@ -51,11 +27,12 @@ def animate_array(array, title):
         os.makedirs(output_folder)
     
     output_file = os.path.join(output_folder, title + '.mp4')
-    max_val = np.max(np.abs(array))
+    max_val = np.max(array)
+    min_val = min(0,np.min(array))
     
     def update(frame):
         plt.clf()
-        plt.imshow(array[:, :, frame], origin='upper', cmap='RdBu_r', interpolation='spline16', vmin=0, vmax=2)
+        plt.imshow(array[:, :, frame], origin='upper', cmap='RdBu_r', interpolation='spline16', vmin=min_val, vmax=max_val)
         plt.colorbar()
         plt.title(title)
     
@@ -79,12 +56,11 @@ def read_params():
     return num_points_x, num_points_y
 
 def main(directory, nx, ny):
-    ux_data, uy_data, rho_data = read_txt_files(directory)
-    velocity, velocity_mag, rho = create_3d_arrays(ux_data, uy_data, rho_data, nx, ny)
-    
-    animate_array(velocity[:, :, :, 0], 'Ux Animation')
-    animate_array(velocity[:, :, :, 1], 'Uy Animation')
-    animate_array(velocity_mag, 'Velocity Animation')
+
+    velocity = read_file_to_array(directory + '/velocity_out.txt', nx, ny)
+    rho = read_file_to_array(directory + '/rho_out.txt', nx, ny)
+
+    animate_array(velocity, 'Velocity Animation')
     animate_array(rho, 'Rho Animation')
 
 if __name__ == "__main__":

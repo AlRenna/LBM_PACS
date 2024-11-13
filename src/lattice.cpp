@@ -7,6 +7,10 @@
 
 #include "lattice.hpp"
 
+//TODO: cambiare i params.json in modo che contenga anche il dt e il max_iter, salvataggio
+//TODO: vedere inlet outlet
+//TODO: Fare un esempio con ostacolo
+// TODO: calcolo lift e drag
 Lattice::Lattice(unsigned int nx_, unsigned int ny_,
                  double nu_)
   : nx(nx_),
@@ -128,7 +132,6 @@ Lattice::populate_Nodes()
   for(unsigned int y = 0; y<ny; ++y){
     for(unsigned int x = 0; x<nx; ++x){
       unsigned int index = scalar_index(x, y);
-      // TODO: capire come inizializzare il file txt delle condizioni initiali considerando anche i nodi solidi
       nodes[index] = Node(node_types[index], {x, y}, ux_in[index], uy_in[index], rho_in[index]);
       nodes[index].set_boundary_node_properties(boundary_node_dir[index], boundary_node_delta[index], dt);
       nodes[index].init_equilibrium();
@@ -141,8 +144,28 @@ Lattice::run()
 {
   std::cout << "Running simulation\n" << std::endl;
   unsigned int iter = 0;
-  writeResults(iter);
+
+  // Delete the output_results directory if it exists
+  if (std::filesystem::exists("output_results")) {
+    std::filesystem::remove_all("output_results");
+    std::filesystem::create_directory("output_results");
+  }
+  else{
+    std::filesystem::create_directory("output_results");
+  }
+  
+  std::string u_filename = "output_results/velocity_out.txt";
+  std::string rho_filename = "output_results/rho_out.txt";
+
+  std::ofstream u_file(u_filename);
+  std::ofstream rho_file(rho_filename);
+
+  // Save the initial conditions
+  writeResults(u_file, rho_file);
+  //writeResults(iter);
+
   iter = iter + 1;
+  
   while(iter <= max_iter)
   {
     std::cout << "Iteration: " << iter << std::endl;
@@ -193,54 +216,26 @@ Lattice::run()
     }
 
     // save the results every 5 iterations
-    if( iter%50 == 0 || iter == max_iter-1)
+    if( iter%20 == 0 || iter == max_iter-1)
     {
       std::cout << "Writing results" << std::endl;
-      writeResults(iter);
+      writeResults(u_file, rho_file);
     }
     iter = iter + 1;
   }
 }
 
 void 
-Lattice::writeResults(const unsigned int iter) {
-  // Create directory if it doesn't exist
-  std::filesystem::create_directory("output_results");
-
-  double curr_time_step = iter * dt;
-
-  std::ostringstream iter_stream;
-  iter_stream << std::setw(6) << std::setfill('0') << iter;
-  std::string iter_str = iter_stream.str();
-
-  std::string ux_filename = "output_results/ux_out_" + iter_str + ".txt";
-  std::string uy_filename = "output_results/uy_out_" + iter_str + ".txt";
-  std::string rho_filename = "output_results/rho_out_" + iter_str + ".txt";
-
+Lattice::writeResults(std::ofstream &file_u, std::ofstream &file_rho) {
   // Save ux_out
-  std::ofstream ux_file(ux_filename);
   for (unsigned int y = 0; y < ny; ++y) {
     for (unsigned int x = 0; x < nx; ++x) {
-      ux_file << ux_out[scalar_index(x, y)] << (x == nx - 1 ? "\n" : ",");
+      unsigned int index = scalar_index(x, y);
+      file_u << std::sqrt(ux_out[index] * ux_out[index] + uy_out[index] * uy_out[index]) << " ";
+      file_rho << rho_out[index] << " ";
     }
   }
-  ux_file.close();
-
-  // Save uy_out
-  std::ofstream uy_file(uy_filename);
-  for (unsigned int y = 0; y < ny; ++y) {
-    for (unsigned int x = 0; x < nx; ++x) {
-      uy_file << uy_out[scalar_index(x, y)] << (x == nx - 1 ? "\n" : ",");
-    }
-  }
-  uy_file.close();
-
-  // Save rho_out
-  std::ofstream rho_file(rho_filename);
-  for (unsigned int y = 0; y < ny; ++y) {
-    for (unsigned int x = 0; x < nx; ++x) {
-      rho_file << rho_out[scalar_index(x, y)] << (x == nx - 1 ? "\n" : ",");
-    }
-  }
-  rho_file.close();
+  file_u << "\n";
+  file_rho << "\n";
+  
 }
