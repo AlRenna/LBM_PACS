@@ -17,8 +17,8 @@ docs/
 
 # Python.
 *env/
-*.csv*
-*.png*
-*.jpg*
+# *.csv*
+# *.png*
+# *.jpg*
 *.DS_Store*
 

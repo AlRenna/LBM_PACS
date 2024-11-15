@@ -50,8 +50,8 @@ def read_params():
     
     # Extract the variables
     image_path = params['image_path']
-    num_points_x = params['new_nx']
-    num_points_y = params['new_ny']
+    num_points_x = params["lattice"]['new_nx']
+    num_points_y = params["lattice"]['new_ny']
     
     return num_points_x, num_points_y
 

@@ -39,18 +39,22 @@ Lattice::Lattice()
 
   nlohmann::json param_json;
   param_file >> param_json;
+  param_file.close();
 
-  if (param_json.find("new_nx") == param_json.end() || 
-      param_json.find("new_ny") == param_json.end() || 
-      param_json.find("nu") == param_json.end()) {
+  if (param_json.find("lattice") == param_json.end() || 
+      param_json["lattice"].find("new_nx") == param_json["lattice"].end() || 
+      param_json["lattice"].find("new_ny") == param_json["lattice"].end() || 
+      param_json["lattice"].find("nu") == param_json["lattice"].end()) {
     throw std::runtime_error("param.json does not contain required parameters");
   }
 
-  nx = param_json["new_nx"];
-  ny = param_json["new_ny"];
-  nu = param_json["nu"];
-  dt = param_json["dt"];
-  max_iter = param_json["max_iter"];
+  nx = param_json["lattice"]["nx"];
+  ny = param_json["lattice"]["ny"];
+  nu = param_json["lattice"]["nu"];
+  dt = param_json["time"]["dt"];
+  save_iter = param_json["time"]["save_iter"];
+  max_iter = param_json["time"]["max_iter"];
+  // T_final = param_json["time"]["T_final"];
   T_final = max_iter * dt;
   tau = 3.0 * nu + 0.5;
   nodes.resize(nx*ny);
@@ -143,7 +147,9 @@ void
 Lattice::run()
 {
   std::cout << "Running simulation\n" << std::endl;
+  clock_t start_time = clock(); // Add this line
   unsigned int iter = 0;
+  double total_time = 0.0; // Add this line
 
   // Delete the output_results directory if it exists
   if (std::filesystem::exists("output_results")) {
@@ -168,6 +174,8 @@ Lattice::run()
   
   while(iter <= max_iter)
   {
+    clock_t iter_start_time = clock(); // Add this line
+
     std::cout << "Iteration: " << iter << std::endl;
     std::cout << "Time: " << iter*dt << std::endl;
     std::cout << "Collision and streaming" << std::endl;
@@ -216,13 +224,22 @@ Lattice::run()
     }
 
     // save the results every 5 iterations
-    if( iter%20 == 0 || iter == max_iter-1)
+    if( iter%save_iter == 0 || iter == max_iter-1)
     {
       std::cout << "Writing results" << std::endl;
       writeResults(u_file, rho_file);
     }
     iter = iter + 1;
+
+    clock_t iter_end_time = clock(); // Add this line
+    total_time += double(iter_end_time - iter_start_time) / CLOCKS_PER_SEC; // Add this line
   }
+  // Add the following lines at the end of the run method
+  clock_t end_time = clock();
+  double elapsed_time = double(end_time - start_time) / CLOCKS_PER_SEC;
+  double mean_time_per_iter = total_time / max_iter; // Add this line
+  std::cout << "Simulation completed in " << elapsed_time << " seconds." << std::endl;
+  std::cout << "Mean time per iteration: " << mean_time_per_iter << " seconds.\n" << std::endl; // Add this line
 }
 
 void 

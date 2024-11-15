@@ -195,6 +195,9 @@ class Lattice
     
     /// Final time
     double T_final = 1.;
+
+    /// Save iteration (# of iterations after which the results are saved)
+    unsigned int save_iter = 1;
     
     /// Maximum number of time steps
     unsigned int max_iter = 100;

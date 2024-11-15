@@ -66,5 +66,6 @@ inline std::vector<double> lid_driven(double val, unsigned int nx, unsigned int 
             break;
         }
     }
+    file.close();
     return ux_in;
 }

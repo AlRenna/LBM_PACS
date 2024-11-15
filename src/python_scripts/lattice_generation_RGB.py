@@ -223,8 +223,8 @@ def adapt_nx_ny(image_path, nx, ny):
         params = json.load(file)
     
     # Update the JSON file with new values
-    params['new_nx'] = nx
-    params['new_ny'] = ny
+    params["lattice"]['new_nx'] = nx
+    params["lattice"]['new_ny'] = ny
     
     # Write the updated JSON file
     with open('params.json', 'w') as file:
@@ -239,8 +239,8 @@ def read_params():
     
     # Extract the variables
     image_path = params['image_path']
-    num_points_x = params['nx']
-    num_points_y = params['ny']
+    num_points_x = params["lattice"]['nx']
+    num_points_y = params["lattice"]['ny']
     
     return image_path, num_points_x, num_points_y
 
@@ -249,8 +249,8 @@ def main():
     num_points_x, num_points_y = adapt_nx_ny(image_path, num_points_x, num_points_y)
     internal_points, external_points, inflow_points, outflow_points, image = classify_points(image_path, num_points_x, num_points_y)
     internal_points, boundary_points_distances = identify_boundary_points_and_distances(internal_points, external_points, num_points_x, num_points_y, image)
-    create_csv_with_point_types_and_distances(internal_points, external_points, inflow_points, outflow_points, boundary_points_distances, num_points_x, num_points_y, 'output.csv')
-    draw_purple_squares(image_path, num_points_x, num_points_y, 'output_with_purple_squares.png')
+    create_csv_with_point_types_and_distances(internal_points, external_points, inflow_points, outflow_points, boundary_points_distances, num_points_x, num_points_y, 'lattice.csv')
+    draw_purple_squares(image_path, num_points_x, num_points_y, 'Lattice_nodes.png')
     return num_points_x, num_points_y
 
 if __name__ == "__main__":
