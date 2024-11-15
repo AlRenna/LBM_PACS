@@ -226,7 +226,7 @@ Lattice::run()
     // save the results every 5 iterations
     if( iter%save_iter == 0 || iter == max_iter-1)
     {
-      std::cout << "Writing results" << std::endl;
+      std::cout << "Writing results\n" << std::endl;
       writeResults(u_file, rho_file);
     }
     iter = iter + 1;

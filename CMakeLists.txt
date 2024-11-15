@@ -13,9 +13,6 @@ function(add_all_subdirectories)
     endforeach()
 endfunction()
 
-# Set the working directory to the build directory
-# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-
 # Generate documentation.
 # add_subdirectory(${CMAKE_SOURCE_DIR}/doc/)
 
@@ -24,6 +21,9 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/src/)
 
 # Generate examples.
 add_subdirectory(${CMAKE_SOURCE_DIR}/examples/)
+
+# Generate images.
+add_subdirectory(${CMAKE_SOURCE_DIR}/images/)
 
 # Add python_scripts subdirectory
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/python_scripts)
