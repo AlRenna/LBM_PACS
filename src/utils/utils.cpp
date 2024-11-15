@@ -5,29 +5,11 @@
  * @author Mattia Marzotto <mattia.marzotto@mail.polimi.it>
  */
 
-#include <vector>
-#include <string>
+#include "src/utils/utils.hpp"
 
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
-
-// TODO: rivedi struttura .hpp e .cpp
-inline std::vector<double> operator*(double scalar, const std::vector<double>& vec) {
-    std::vector<double> result(vec.size());
-    for (std::size_t i = 0; i < vec.size(); ++i) {
-        result[i] = scalar * vec[i];
-    }
-    return result;
-}
-
-inline std::vector<double> operator*(const std::vector<double>& vec, double scalar) {
-    return scalar * vec;
-}
-
-inline std::vector<double> lid_driven(double val, unsigned int nx, unsigned int ny, const std::string& filename_nodes){
+std::vector<double> 
+lid_driven(double val, unsigned int nx, unsigned int ny, const std::string& filename_nodes)
+{
     std::vector<double> ux_in(nx*ny, 0.0);
 
     std::ifstream file(filename_nodes);

@@ -20,10 +20,5 @@ add_library(LatticeLib ${SOURCES})
 # Link nlohmann-json to your target
 target_link_libraries(LatticeLib PUBLIC nlohmann_json::nlohmann_json)
 
-# Optionally, specify include directories if needed
-# target_include_directories(LatticeLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-# Add subdirectories for further libraries or executables
-# add_subdirectory(io)
-# add_subdirectory(numerics)
-# add_subdirectory(python_scripts)
+# Add the root directory to the include directories
+target_include_directories(LatticeLib PUBLIC ${CMAKE_SOURCE_DIR})

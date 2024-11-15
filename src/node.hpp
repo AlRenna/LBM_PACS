@@ -12,7 +12,7 @@
 #include <memory>
 #include <cmath>
 
-#include "utils.cpp"
+#include "src/utils/utils.hpp"
 
 // Forward declaration
 class Lattice;

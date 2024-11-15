@@ -5,11 +5,10 @@
  * @author Mattia Marzotto <mattia.marzotto@mail.polimi.it>
  */
 
+#include "src/utils/utils_python.hpp"
 
-#include <cstdlib>
-#include <iostream>
-
-inline void run_terminal_python(std::string script_path) {
+void 
+run_terminal_python(std::string script_path) {
     std::string command = {"python3 " + script_path};
     int result = system(command.c_str());
     if (result != 0) {

@@ -5,8 +5,8 @@
  * @author Mattia Marzotto <mattia.marzotto@mail.polimi.it>
  */
 
-#include "node.hpp"
-#include "lattice.hpp"
+#include "src/node.hpp"
+#include "src/lattice.hpp"
 
 class Lattice;
 

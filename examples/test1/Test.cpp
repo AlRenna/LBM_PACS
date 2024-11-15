@@ -6,8 +6,8 @@
  */
 
 // #include <Python.h>
-#include "../../src/lattice.hpp"
-#include "../../src/utils_python.cpp"
+#include "src/lattice.hpp"
+#include "src/utils/utils_python.hpp"
 
 #include <iostream> 
 #include <stdexcept>

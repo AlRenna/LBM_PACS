@@ -5,7 +5,7 @@
  * @author Mattia Marzotto <mattia.marzotto@mail.polimi.it>
  */
 
-#include "lattice.hpp"
+#include "src/lattice.hpp"
 
 //TODO: cambiare i params.json in modo che contenga anche il dt e il max_iter, salvataggio
 //TODO: vedere inlet outlet

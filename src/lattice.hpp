@@ -8,7 +8,7 @@
 #ifndef __LATTICE_HPP__
 #define __LATTICE_HPP__
 
-#include "node.hpp"
+#include "src/node.hpp"
 #include <nlohmann/json.hpp>
 
 #include <filesystem>
