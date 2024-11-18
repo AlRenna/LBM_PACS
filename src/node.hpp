@@ -93,6 +93,12 @@ class Node
      */
     void compute_physical_quantities();
 
+    /**
+     * @brief Function to compute physical integrals such as lift and drag
+     * 
+     */
+    // void compute_integrals();
+
 
     void update_f();
 
@@ -188,6 +194,11 @@ class Node
     double uy;
     /// Node density
     double rho;
+
+    /// Local drag
+    // double drag;
+    /// Local lift
+    // double lift;
 
     /// Node type (fluid, boundary, solid)
     NodeType node_type;

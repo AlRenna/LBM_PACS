@@ -9,8 +9,10 @@
 
 //TODO: cambiare i params.json in modo che contenga anche il dt e il max_iter, salvataggio
 //TODO: vedere inlet outlet
-//TODO: Fare un esempio con ostacolo
-// TODO: calcolo lift e drag
+//TODO: Fare un esempio con ala (ostacolo)
+
+// TODO: calcolo drag e lift (SOLO SUI NODI BOUNDARY ATTORNO ALL'OSTACOLO) capire se inserire un nuovo type (colore) per identificare l'ostacolo
+
 Lattice::Lattice(unsigned int nx_, unsigned int ny_,
                  double nu_)
   : nx(nx_),
@@ -48,14 +50,19 @@ Lattice::Lattice()
     throw std::runtime_error("param.json does not contain required parameters");
   }
 
+  Length = param_json["lattice"]["Length"];
   nx = param_json["lattice"]["nx"];
   ny = param_json["lattice"]["ny"];
   nu = param_json["lattice"]["nu"];
-  dt = param_json["time"]["dt"];
   save_iter = param_json["time"]["save_iter"];
-  max_iter = param_json["time"]["max_iter"];
-  // T_final = param_json["time"]["T_final"];
-  T_final = max_iter * dt;
+  T_final = param_json["time"]["T_final"];
+  
+  // Cs = 1/sqrt(3) * delta_x / delta_t = dx/dt; 
+  // dx = L/n; n = sqrt(nx^2 + ny^2); dt = sqrt(Cs) * dx;
+  // max_iter = T_final / dt; 
+  dt = std::sqrt(3) * Length / std::sqrt(nx * nx + ny * ny);
+  max_iter = static_cast<int>(std::ceil(T_final / dt));
+
   tau = 3.0 * nu + 0.5;
   nodes.resize(nx*ny);
   node_types.resize(nx*ny, NodeType::solid);
@@ -174,7 +181,7 @@ Lattice::run()
   
   while(iter <= max_iter)
   {
-    clock_t iter_start_time = clock(); // Add this line
+    clock_t iter_start_time = clock();
 
     std::cout << "Iteration: " << iter << std::endl;
     std::cout << "Time: " << iter*dt << std::endl;
@@ -191,11 +198,13 @@ Lattice::run()
           // {
           //   nodes[index].apply_BB(*this);
           // }
+          // (parallel computation) here we do not need to wait since collide and stream work on different members of the node
           nodes[index].stream(*this);
         }
       }
     }
 
+    // TODO: (parallel computation) check when to wait
     std::cout << "Physical quantities evaluation\n" << std::endl;
     // We separate the streaming step from the collision step
     // We need the updated information on all the node to procede
@@ -208,22 +217,21 @@ Lattice::run()
         {
           if(node_types[index] == NodeType::boundary){
             nodes[index].apply_IBB(*this);
+            // nodes[index].compute_integrals();
           }
           nodes[index].update_f();
 
           nodes[index].compute_physical_quantities();
-          // nodes[index].compute_integrals();
+          
 
           ux_out[index] = nodes[index].get_ux();
           uy_out[index] = nodes[index].get_uy();
           rho_out[index] = nodes[index].get_rho();
-
-                    
+          
         }
       }
     }
 
-    // save the results every 5 iterations
     if( iter%save_iter == 0 || iter == max_iter-1)
     {
       std::cout << "Writing results\n" << std::endl;
@@ -231,15 +239,17 @@ Lattice::run()
     }
     iter = iter + 1;
 
-    clock_t iter_end_time = clock(); // Add this line
-    total_time += double(iter_end_time - iter_start_time) / CLOCKS_PER_SEC; // Add this line
+    clock_t iter_end_time = clock();
+    total_time += double(iter_end_time - iter_start_time) / CLOCKS_PER_SEC;
   }
-  // Add the following lines at the end of the run method
+
   clock_t end_time = clock();
   double elapsed_time = double(end_time - start_time) / CLOCKS_PER_SEC;
-  double mean_time_per_iter = total_time / max_iter; // Add this line
+  double mean_time_per_iter = total_time / max_iter;
   std::cout << "Simulation completed in " << elapsed_time << " seconds." << std::endl;
-  std::cout << "Mean time per iteration: " << mean_time_per_iter << " seconds.\n" << std::endl; // Add this line
+  std::cout << "Mean time per iteration: " << mean_time_per_iter << " seconds.\n" << std::endl;
+
+
 }
 
 void 
