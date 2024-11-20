@@ -37,8 +37,9 @@ Node::Node(NodeType node_type_, std::vector<unsigned int> coord_,
 {
   f = std::make_unique<std::vector<double>>(dir, 0.);
   f_adj = std::make_unique<std::vector<double>>(dir, 0.);
-  boundary_node_dir.resize(dir, false);
-  boundary_node_delta.resize(dir, 0.);
+  bounce_back_dir.resize(dir, false);
+  bounce_back_delta.resize(dir, 0.);
+  outlet_dir.resize(dir, false);
 }
 
 void
@@ -86,7 +87,7 @@ Node::apply_IBB(const Lattice &lattice)
 
   // Interpolated Bounce-Back
   for(unsigned int i = 1; i<dir; ++i){
-    if(boundary_node_dir[i]){
+    if(bounce_back_dir[i]){
 
       // take the velocity at the wall node
       x_adg = coord[0] + coeff[i][0];
@@ -98,12 +99,12 @@ Node::apply_IBB(const Lattice &lattice)
       // f_adj_post_coll = lattice.get_node(x_adg, y_adg).get_f(i);
       f_adj_post_coll = (*f_adj)[i]; 
       
-      (*f_adj)[bb_indexes[i]] = (2 * boundary_node_delta[i] * (*f)[i] + 
-                      (1 - 2 * boundary_node_delta[i]) * f_adj_post_coll) * 
-                      (boundary_node_delta[i] < 0.5) +
-                      (1. / (2 * boundary_node_delta[i]) * (*f)[i] + 
-                      ((2 * boundary_node_delta[i] - 1.) / (2 * boundary_node_delta[i])) * (*f)[bb_indexes[i]]) *
-                      (boundary_node_delta[i] >= 0.5) - 
+      (*f_adj)[bb_indexes[i]] = (2 * bounce_back_delta[i] * (*f)[i] + 
+                      (1 - 2 * bounce_back_delta[i]) * f_adj_post_coll) * 
+                      (bounce_back_delta[i] < 0.5) +
+                      (1. / (2 * bounce_back_delta[i]) * (*f)[i] + 
+                      ((2 * bounce_back_delta[i] - 1.) / (2 * bounce_back_delta[i])) * (*f)[bb_indexes[i]]) *
+                      (bounce_back_delta[i] >= 0.5) - 
                       (ux_wall * coeff[i][0] + uy_wall * coeff[i][1]) * weights[i] * 6; // Wall velocity term (rho)
     }
   }
@@ -118,7 +119,7 @@ Node::apply_BB(const Lattice &lattice)
   double uy_wall = 0.;
 
   for(unsigned int i = 1; i<dir; ++i){
-    if(boundary_node_dir[i]){
+    if(bounce_back_dir[i]){
       x_adg = coord[0] + coeff[i][0];
       y_adg = coord[1] + coeff[i][1];
       ux_wall = lattice.get_node(x_adg, y_adg).get_ux();
@@ -144,9 +145,9 @@ Node::stream(Lattice& lattice)
   unsigned int y_adg = 0;
 
   (*f_adj)[0] = (*f)[0];
-
+  // bounce_back_dir, is also used for outlet node to avoid streaming outside the domain
   for(unsigned int i = 1; i<dir; ++i){
-    if(!boundary_node_dir[i]){
+    if(!bounce_back_dir[i]){
       x_adg = x + coeff[i][0];
       y_adg = y + coeff[i][1];
       lattice.get_node(x_adg, y_adg).set_f_adj(i, (*f)[i]);
@@ -186,10 +187,24 @@ Node::update_f()
 }
 
 void
-Node::set_boundary_node_properties(std::vector<bool> boundary_node_dir_, 
-                                  std::vector<double> boundary_node_delta_,
-                                  double dt)
+Node::set_bounce_back_properties(std::vector<bool> bounce_back_dir_, 
+                                  std::vector<double> bounce_back_delta_)
 {
-  boundary_node_dir = boundary_node_dir_;
-  boundary_node_delta = boundary_node_delta_;
+  bounce_back_dir = bounce_back_dir_;
+  bounce_back_delta = bounce_back_delta_;
+}
+
+void
+Node::set_outlet_properties()
+{
+  unsigned int x = coord[0];
+  unsigned int y = coord[1];
+  unsigned int x_adg = 0;
+  unsigned int y_adg = 0;
+
+  for(unsigned int i = 1; i<dir; ++i){
+    if(!bounce_back_dir[i]){
+      // TODO: inserisci metodo per vedere il tipo dei nodi circostanti 
+    }
+  }
 }

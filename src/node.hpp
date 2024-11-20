@@ -25,8 +25,8 @@ enum class NodeType
 {
   fluid,
   solid,
-  inflow,
-  outflow,
+  inlet,
+  outlet,
   boundary
 };
 
@@ -126,11 +126,10 @@ class Node
      * such as the direction in which to apply the BCs (IBB) and the 
      * weigthed distance between the node and the wall.
      * 
-     * @param boundary_node_dir_ 
+     * @param bounce_back_dir_ 
      */
-    void set_boundary_node_properties(std::vector<bool> boundary_node_dir_, 
-                                      std::vector<double> boundary_node_delta_,
-                                      double dt);
+    void set_bounce_back_properties(std::vector<bool> bounce_back_dir_, 
+                                      std::vector<double> bounce_back_delta_);
 
     /**
      * @brief Set the distribution for the adjacent node alorng direction i.
@@ -139,6 +138,13 @@ class Node
      * @param value 
      */
     inline void set_f_adj(int i, double value) { (*f_adj)[i] = value; }
+    
+    /**
+     * @brief Set the outlet properties object
+     * 
+     */
+    void set_outlet_properties();
+    
     /// @}
 
 
@@ -202,10 +208,13 @@ class Node
 
     /// Node type (fluid, boundary, solid)
     NodeType node_type;
-    /// Directions in which the BCs are to be applied around the node (if it's a boundary node)
-    std::vector<bool> boundary_node_dir;
-    /// Distance between the node and the wall (if it's a boundary node), along the direction of boundary_node_dir
-    std::vector<double> boundary_node_delta;
+    /// Directions in which the BCs are to be applied around the node (if it's a boundary node or outlet node)
+    std::vector<bool> bounce_back_dir;
+    /// Distance between the node and the wall (if it's a boundary node), along the direction of bounce_back_dir
+    std::vector<double> bounce_back_delta;
+    /// Exit direction for otflow nodes 
+    std::vector<bool> outlet_dir;
+
     /// 2D coordinates of the node
     std::vector<unsigned int> coord;
 

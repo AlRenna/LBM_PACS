@@ -7,7 +7,6 @@
 
 #include "src/lattice.hpp"
 
-//TODO: cambiare i params.json in modo che contenga anche il dt e il max_iter, salvataggio
 //TODO: vedere inlet outlet
 //TODO: Fare un esempio con ala (ostacolo)
 
@@ -22,8 +21,8 @@ Lattice::Lattice(unsigned int nx_, unsigned int ny_,
 {
   nodes.resize(nx*ny);
   node_types.resize(nx*ny, NodeType::solid);
-  boundary_node_delta.resize(nx*ny, std::vector<double>(Node::dir, 0.0));
-  boundary_node_dir.resize(nx*ny, std::vector<bool>(Node::dir, false));
+  bounce_back_delta.resize(nx*ny, std::vector<double>(Node::dir, 0.0));
+  bounce_back_dir.resize(nx*ny, std::vector<bool>(Node::dir, false));
   ux_in.resize(nx*ny, 0.);
   uy_in.resize(nx*ny, 0.);
   rho_in.resize(nx*ny, 1.0);
@@ -66,8 +65,8 @@ Lattice::Lattice()
   tau = 3.0 * nu + 0.5;
   nodes.resize(nx*ny);
   node_types.resize(nx*ny, NodeType::solid);
-  boundary_node_delta.resize(nx*ny, std::vector<double>(Node::dir, 0.0));
-  boundary_node_dir.resize(nx*ny, std::vector<bool>(Node::dir, false));
+  bounce_back_delta.resize(nx*ny, std::vector<double>(Node::dir, 0.0));
+  bounce_back_dir.resize(nx*ny, std::vector<bool>(Node::dir, false));
   ux_in.resize(nx*ny, 0.);
   uy_in.resize(nx*ny, 0.);
   rho_in.resize(nx*ny, 1.0);
@@ -123,13 +122,16 @@ Lattice::readNodesFromCSV(const std::string& filename) {
     std::getline(ss, token, ',');
     NodeType nodeType = static_cast<NodeType>(std::stoi(token));
     node_types[index] = nodeType;
-
-    // Read the last 8 columns
-    for (int i = 1; i < Node::dir; ++i) {
-      std::getline(ss, token, ',');
-      double value = std::stod(token);
-      boundary_node_delta[index][i] = value;
-      boundary_node_dir[index][i] = (value > std::numeric_limits<double>::epsilon());
+    
+    // TODO: check if per boundary
+    if(nodeType == NodeType::boundary){
+      // Read the last 8 columns
+      for (int i = 1; i < Node::dir; ++i) {
+        std::getline(ss, token, ',');
+        double value = std::stod(token);
+        bounce_back_delta[index][i] = value;
+        bounce_back_dir[index][i] = (value > std::numeric_limits<double>::epsilon());
+      }
     }
   }
 
@@ -144,7 +146,12 @@ Lattice::populate_Nodes()
     for(unsigned int x = 0; x<nx; ++x){
       unsigned int index = scalar_index(x, y);
       nodes[index] = Node(node_types[index], {x, y}, ux_in[index], uy_in[index], rho_in[index]);
-      nodes[index].set_boundary_node_properties(boundary_node_dir[index], boundary_node_delta[index], dt);
+      if(node_types[index] == NodeType::boundary || node_types[index] == NodeType::outlet){
+        nodes[index].set_bounce_back_properties(bounce_back_dir[index], bounce_back_delta[index]);
+      }
+      if(node_types[index] == NodeType::outlet){
+        nodes[index].set_outlet_properties();
+      }
       nodes[index].init_equilibrium();
     }
   }
@@ -191,7 +198,7 @@ Lattice::run()
       for(unsigned int x = 0; x<nx; ++x)
       {
         unsigned int index = scalar_index(x, y);
-        if(node_types[index] != NodeType::solid)
+        if(node_types[index] != NodeType::solid && node_types[index] != NodeType::inlet)
         {
           nodes[index].collide(*this);
           // if(node_types[index] == NodeType::boundary)
@@ -213,7 +220,7 @@ Lattice::run()
       for(unsigned int x = 0; x<nx; ++x)
       {
         unsigned int index = scalar_index(x, y);
-        if(node_types[index] != NodeType::solid)
+        if(node_types[index] != NodeType::solid && node_types[index] != NodeType::inlet)
         {
           if(node_types[index] == NodeType::boundary){
             nodes[index].apply_IBB(*this);

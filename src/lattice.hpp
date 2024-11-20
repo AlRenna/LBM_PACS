@@ -153,9 +153,9 @@ class Lattice
     /// Node types (fluid, solid, etc.)
     std::vector<NodeType> node_types;
     /// Directions in which the BCs are to be applied for each boundary node 
-    std::vector<std::vector<bool>> boundary_node_dir;
-    /// Distances between the node and the wall along the direction of boundary_node_dir for each boundary node
-    std::vector<std::vector<double>> boundary_node_delta;
+    std::vector<std::vector<bool>> bounce_back_dir;
+    /// Distances between the node and the wall along the direction of bounce_back_dir for each boundary node
+    std::vector<std::vector<double>> bounce_back_delta;
 
     /// @}
 

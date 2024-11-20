@@ -20,22 +20,29 @@ def read_file_to_array(filename, nx, ny):
     
     return data_array
 
+def read_lattice_map(filepath, nx, ny):
+    lattice_map = np.zeros((nx, ny), dtype=bool)
+    df = pd.read_csv(filepath)
+    for _, row in df.iterrows():
+        if row['type'] == 4 or row['type'] == 0:
+            lattice_map[int(row['coord_y']), int(row['coord_x'])] = True
+    return lattice_map
 
-def animate_array(array, title):
+def animate_array(array, title, lattice_map):
     output_folder = "output_animations"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
     output_file = os.path.join(output_folder, title + '.mp4')
     max_val = np.max(array)
-    min_val = min(0,np.min(array))
+    min_val = min(0, np.min(array))
     
     def update(frame):
         plt.clf()
-        plt.imshow(array[:, :, frame], origin='upper', cmap='RdBu_r', interpolation='spline16', vmin=min_val, vmax=max_val)
+        frame_data = np.where(lattice_map, array[:, :, frame], np.nan)
+        plt.imshow(frame_data, origin='upper', cmap='RdBu_r', interpolation='spline16', vmin=min_val, vmax=max_val)
         plt.colorbar()
         plt.title(title)
-    
     
     ani = FuncAnimation(plt.figure(), update, frames=array.shape[2], interval=100)
     
@@ -56,12 +63,12 @@ def read_params():
     return num_points_x, num_points_y
 
 def main(directory, nx, ny):
+    lattice_map = read_lattice_map('lattice.csv', nx, ny)
+    velocity = read_file_to_array(os.path.join(directory, 'velocity_out.txt'), nx, ny)
+    rho = read_file_to_array(os.path.join(directory, 'rho_out.txt'), nx, ny)
 
-    velocity = read_file_to_array(directory + '/velocity_out.txt', nx, ny)
-    rho = read_file_to_array(directory + '/rho_out.txt', nx, ny)
-
-    animate_array(velocity, 'Velocity Animation')
-    animate_array(rho, 'Rho Animation')
+    animate_array(velocity, 'Velocity Animation', lattice_map)
+    animate_array(rho, 'Rho Animation', lattice_map)
 
 if __name__ == "__main__":
     directory = "output_results" # input("Enter the directory containing the CSV files: ")

@@ -3,6 +3,9 @@ import numpy as np
 import csv
 import json 
 
+# TODO: segnare come nodi di boundary quelli vicini ad un inlet e calcolare i delta
+# TODO: calcolare i delta per i nodi di oulet
+
 def preprocess_image(image_path, cutoff_value=128):
 
     # Split the original image into its RGB components and the greyscale image
@@ -95,7 +98,7 @@ def identify_boundary_points_and_distances(internal_points, external_points, num
 
 def classify_points(image_path, num_points_x, num_points_y):
     
-    # Preprocess the image to r,g,b adn greyscale each corresponding to wall, inflow, outflow and fluid pixels
+    # Preprocess the image to r,g,b adn greyscale each corresponding to wall, inlet, outlet and fluid pixels
     r,g,b,grey = preprocess_image(image_path)
     
     # Get image dimensions
@@ -110,8 +113,8 @@ def classify_points(image_path, num_points_x, num_points_y):
     # Initialize lists to hold internal and external points
     internal_points = []
     external_points = []
-    inflow_points = []
-    outflow_points = []
+    inlet_points = []
+    outlet_points = []
 
     # Classify points
     for i in range(num_points_y):
@@ -120,16 +123,16 @@ def classify_points(image_path, num_points_x, num_points_y):
             y_px = int(i * y_spacing) 
             if r[y_px, x_px] == 255:  # Wall pixel
                 external_points.append((j, i))
-            if g[y_px, x_px] == 255:  # Inflow pixel
-                inflow_points.append((j, i))
-            if b[y_px, x_px] == 255:  # Outflow pixel
-                outflow_points.append((j, i))
+            if g[y_px, x_px] == 255:  # inlet pixel
+                inlet_points.append((j, i))
+            if b[y_px, x_px] == 255:  # outlet pixel
+                outlet_points.append((j, i))
             if grey[y_px, x_px]  == 0:  # Fluid pixel
                 internal_points.append((j, i))
             
-    return internal_points, external_points, inflow_points, outflow_points, r
+    return internal_points, external_points, inlet_points, outlet_points, r
 
-def create_csv_with_point_types_and_distances(internal_points, external_points, inflow_points, outflow_points, boundary_points_distances, num_points_x, num_points_y, output_csv_path):
+def create_csv_with_point_types_and_distances(internal_points, external_points, inlet_points, outlet_points, boundary_points_distances, num_points_x, num_points_y, output_csv_path):
     # Create a dictionary to store the type and distances for each point
     point_data = {}
 
@@ -141,12 +144,12 @@ def create_csv_with_point_types_and_distances(internal_points, external_points, 
     for x, y in external_points:
         point_data[(x, y)] = [1] + [0.0] * 8
     
-    # Mark inflow points
-    for x, y in inflow_points:
+    # Mark inlet points
+    for x, y in inlet_points:
         point_data[(x, y)] = [2] + [0.0] * 8
 
-    # Mark outflow points
-    for x, y in outflow_points:
+    # Mark outlet points
+    for x, y in outlet_points:
         point_data[(x, y)] = [3] + [0.0] * 8
 
     # Mark boundary points and store distances
@@ -247,9 +250,9 @@ def read_params():
 def main():
     image_path, num_points_x, num_points_y = read_params()
     num_points_x, num_points_y = adapt_nx_ny(image_path, num_points_x, num_points_y)
-    internal_points, external_points, inflow_points, outflow_points, image = classify_points(image_path, num_points_x, num_points_y)
+    internal_points, external_points, inlet_points, outlet_points, image = classify_points(image_path, num_points_x, num_points_y)
     internal_points, boundary_points_distances = identify_boundary_points_and_distances(internal_points, external_points, num_points_x, num_points_y, image)
-    create_csv_with_point_types_and_distances(internal_points, external_points, inflow_points, outflow_points, boundary_points_distances, num_points_x, num_points_y, 'lattice.csv')
+    create_csv_with_point_types_and_distances(internal_points, external_points, inlet_points, outlet_points, boundary_points_distances, num_points_x, num_points_y, 'lattice.csv')
     draw_purple_squares(image_path, num_points_x, num_points_y, 'Lattice_nodes.png')
     return num_points_x, num_points_y
 
