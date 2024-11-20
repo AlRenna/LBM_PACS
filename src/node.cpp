@@ -90,7 +90,7 @@ Node::apply_BCs(const Lattice &lattice)
         apply_IBB(lattice, i);
       }
       else if(lattice.get_node(x_adj, y_adj).get_node_type() == NodeType::outlet){
-        apply_anti_BB(lattice, i);
+        apply_BB(lattice, i);
       }
       else{
         throw std::runtime_error("Invalid BCs type");
@@ -131,15 +131,20 @@ Node::apply_anti_BB(const Lattice &lattice, unsigned int i){
   unsigned int y_adj = coord[1] + coeff[bb_indexes[i]][1];
   double ux_fluid = lattice.get_node(x_adj, y_adj).get_ux();
   double uy_fluid = lattice.get_node(x_adj, y_adj).get_uy();
+  double rho_fluid = lattice.get_node(x_adj, y_adj).get_rho();
 
   // Extrapolated outlet velocity
   double u_x_out = 1.5 * ux - 0.5 * ux_fluid;
   double u_y_out = 1.5 * uy - 0.5 * uy_fluid; 
+  double rho_out = 1.5 * rho - 0.5 * rho_fluid;
   
-  (*f_adj)[bb_indexes[i]] = -(*f)[i] +
-                          2 * weights[i] * rho * 
+  (*f_adj)[bb_indexes[i]] = -(*f)[i]  +
+                          2 * weights[i] * rho_out *
                           (1 + 4.5 * (coeff[i][0] * u_x_out + coeff[i][1] * u_y_out) * (coeff[i][0] * u_x_out + coeff[i][1] * u_y_out) -
                           3.5 * (u_x_out * u_x_out + u_y_out * u_y_out));
+  if(coord[0] == 198 && coord[1] == 185){
+    std::cout << "Outlet node: " << i << " " << bb_indexes[i] << " " << (*f)[i] << " " << (*f_adj)[bb_indexes[i]] << std::endl;
+  }
 }
 
 void
