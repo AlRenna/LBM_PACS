@@ -25,10 +25,10 @@ def read_lattice_map(filepath, nx, ny):
     df = pd.read_csv(filepath)
     for _, row in df.iterrows():
         if row['type'] == 4 or row['type'] == 0:
-            lattice_map[int(row['coord_y']), int(row['coord_x'])] = True
+            lattice_map[int(row['coord_x']), int(row['coord_y'])] = True
     return lattice_map
 
-def animate_array(array, title, lattice_map):
+def animate_array(array, dt, title, lattice_map):
     output_folder = "output_animations"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -42,7 +42,7 @@ def animate_array(array, title, lattice_map):
         frame_data = np.where(lattice_map, array[:, :, frame], np.nan)
         plt.imshow(frame_data, origin='upper', cmap='RdBu_r', interpolation='spline16', vmin=min_val, vmax=max_val)
         plt.colorbar()
-        plt.title(title)
+        plt.title(f"{title} - Time: {frame * dt :.2f}")
     
     ani = FuncAnimation(plt.figure(), update, frames=array.shape[2], interval=100)
     
@@ -57,21 +57,24 @@ def read_params():
     
     # Extract the variables
     image_path = params['image_path']
-    num_points_x = params["lattice"]['new_nx']
-    num_points_y = params["lattice"]['new_ny']
+    num_points_x = params["generated_variables"]['new_nx']
+    num_points_y = params["generated_variables"]['new_ny']
+    dt = params["generated_variables"]['dt']
+    save_iter = params["time"]['save_iter']
+    dt = dt * save_iter
     
-    return num_points_x, num_points_y
+    return num_points_x, num_points_y, dt
 
-def main(directory, nx, ny):
+def main(directory, nx, ny, dt):
     lattice_map = read_lattice_map('lattice.csv', nx, ny)
     velocity = read_file_to_array(os.path.join(directory, 'velocity_out.txt'), nx, ny)
     rho = read_file_to_array(os.path.join(directory, 'rho_out.txt'), nx, ny)
 
-    animate_array(velocity, 'Velocity Animation', lattice_map)
-    animate_array(rho, 'Rho Animation', lattice_map)
+    animate_array(velocity, dt, 'Velocity Animation', lattice_map)
+    animate_array(rho, dt, 'Rho Animation', lattice_map)
 
 if __name__ == "__main__":
     directory = "output_results" # input("Enter the directory containing the CSV files: ")
-    nx, ny = read_params() 
-    
-    main(directory, nx, ny)
+    nx, ny, dt, = read_params() 
+    print(nx, ny, dt)
+    main(directory, nx, ny, dt)

@@ -226,8 +226,15 @@ def adapt_nx_ny(image_path, nx, ny):
         params = json.load(file)
     
     # Update the JSON file with new values
-    params["lattice"]['new_nx'] = nx
-    params["lattice"]['new_ny'] = ny
+    params["generated_variables"]['new_nx'] = nx
+    params["generated_variables"]['new_ny'] = ny
+
+    # Calculate the time interval
+    length = params["lattice"]['Length']
+    dt  = np.sqrt(3) *  length/ np.sqrt(nx * nx + ny * ny)
+    iterations = int(np.ceil(params["time"]['T_final'] / dt))
+    params["generated_variables"]['dt'] = dt
+    params["generated_variables"]['iterations'] = iterations
     
     # Write the updated JSON file
     with open('params.json', 'w') as file:

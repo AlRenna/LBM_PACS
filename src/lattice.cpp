@@ -43,15 +43,19 @@ Lattice::Lattice()
   param_file.close();
 
   if (param_json.find("lattice") == param_json.end() || 
-      param_json["lattice"].find("new_nx") == param_json["lattice"].end() || 
-      param_json["lattice"].find("new_ny") == param_json["lattice"].end() || 
+      param_json.find("generated_variables") == param_json.end() ||
+      param_json["generated_variables"].find("new_nx") == param_json["generated_variables"].end() || 
+      param_json["generated_variables"].find("new_ny") == param_json["generated_variables"].end() || 
+      param_json["generated_variables"].find("iterations") == param_json["generated_variables"].end() ||
       param_json["lattice"].find("nu") == param_json["lattice"].end()) {
     throw std::runtime_error("param.json does not contain required parameters");
   }
 
   Length = param_json["lattice"]["Length"];
-  nx = param_json["lattice"]["nx"];
-  ny = param_json["lattice"]["ny"];
+  nx = param_json["generated_variables"]["new_nx"];
+  ny = param_json["generated_variables"]["new_ny"];
+  dt = param_json["generated_variables"]["dt"];
+  max_iter = param_json["generated_variables"]["iterations"];
   nu = param_json["lattice"]["nu"];
   save_iter = param_json["time"]["save_iter"];
   T_final = param_json["time"]["T_final"];
@@ -59,8 +63,8 @@ Lattice::Lattice()
   // Cs = 1/sqrt(3) * delta_x / delta_t = dx/dt; 
   // dx = L/n; n = sqrt(nx^2 + ny^2); dt = sqrt(Cs) * dx;
   // max_iter = T_final / dt; 
-  dt = std::sqrt(3) * Length / std::sqrt(nx * nx + ny * ny);
-  max_iter = static_cast<int>(std::ceil(T_final / dt));
+  // dt = std::sqrt(3) * Length / std::sqrt(nx * nx + ny * ny);
+  // max_iter = static_cast<int>(std::ceil(T_final / dt));
 
   tau = 3.0 * nu + 0.5;
   nodes.resize(nx*ny);
