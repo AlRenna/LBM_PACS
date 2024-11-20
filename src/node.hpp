@@ -74,6 +74,13 @@ class Node
      */
     void stream(Lattice& lattice);
 
+    /**
+     * @brief Apply the Boundary Conditions.
+     * 
+     * @param lattice 
+     */
+    void apply_BCs(const Lattice &lattice);
+
      /**
      * @brief Apply the Iterpolated Bounce-Back.
      * Use the post-collision distribution to compute the IBB:
@@ -83,9 +90,11 @@ class Node
      * f_bb_i = 1/(2*q_i)*f_i(x_b) + [(2*q - 1)/(2*q)]*f_bb_i(x_b) if q_i >= 1/2
      *
      */
-    void apply_IBB(const Lattice &lattice);
+    void apply_IBB(const Lattice &lattice, unsigned int i);
 
-    void apply_BB(const Lattice &lattice);
+    void apply_BB(const Lattice &lattice, unsigned int i);
+
+    void apply_anti_BB(const Lattice &lattice, unsigned int i);
 
 
     /**
@@ -115,6 +124,7 @@ class Node
     inline double get_ux() const { return ux; }
     inline double get_uy() const { return uy; }
     inline double get_rho() const { return rho; }
+    inline NodeType get_node_type() const { return node_type; }
     
     /// @}
 
@@ -138,12 +148,7 @@ class Node
      * @param value 
      */
     inline void set_f_adj(int i, double value) { (*f_adj)[i] = value; }
-    
-    /**
-     * @brief Set the outlet properties object
-     * 
-     */
-    void set_outlet_properties();
+
     
     /// @}
 
@@ -212,8 +217,6 @@ class Node
     std::vector<bool> bounce_back_dir;
     /// Distance between the node and the wall (if it's a boundary node), along the direction of bounce_back_dir
     std::vector<double> bounce_back_delta;
-    /// Exit direction for otflow nodes 
-    std::vector<bool> outlet_dir;
 
     /// 2D coordinates of the node
     std::vector<unsigned int> coord;

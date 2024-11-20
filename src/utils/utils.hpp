@@ -54,6 +54,9 @@ inline std::vector<double> operator*(const std::vector<double>& vec, double scal
  */
 std::vector<double> lid_driven(double val, unsigned int nx, unsigned int ny, const std::string& filename_nodes);
 
+std::vector<double> uniform_left_inlet(double val, unsigned int nx, unsigned int ny, const std::string& filename_nodes);
+
+
 
 
 #endif // __UTILS_HPP__

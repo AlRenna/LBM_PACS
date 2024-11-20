@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     nlohmann::json params;
     params_file >> params;
     params_file.close();
-    double u_lid = params["test_info"]["u_lid"];
+    double u_in = params["test_info"]["u_in"];    
     double rho_fluid = params["test_info"]["rho"];
 
     // Path to the python script to preprocess the image and classify the nodes
@@ -38,8 +38,8 @@ int main(int argc, char **argv)
     std::vector<double> uy_in(nx*ny, 0.0);
     std::vector<double> rho_in(nx*ny, rho_fluid);
 
-    // Set the lid driven boundary condition on the upper wall
-    ux_in = lid_driven(u_lid, nx, ny, "lattice.csv");
+    // Set the inlet velocity on left wall
+    ux_in = uniform_left_inlet(u_in, nx, ny, "lattice.csv");
 
     // Set the initial and boundary conditions
     lattice.load_ICs_and_BCs(ux_in, uy_in, rho_in, "lattice.csv");

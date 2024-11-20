@@ -21,11 +21,11 @@ def read_file_to_array(filename, nx, ny):
     return data_array
 
 def read_lattice_map(filepath, nx, ny):
-    lattice_map = np.zeros((nx, ny), dtype=bool)
+    lattice_map = np.zeros((ny, nx), dtype=bool)
     df = pd.read_csv(filepath)
     for _, row in df.iterrows():
         if row['type'] == 4 or row['type'] == 0:
-            lattice_map[int(row['coord_x']), int(row['coord_y'])] = True
+            lattice_map[int(row['coord_y']), int(row['coord_x'])] = True
     return lattice_map
 
 def animate_array(array, dt, title, lattice_map):
@@ -76,5 +76,5 @@ def main(directory, nx, ny, dt):
 if __name__ == "__main__":
     directory = "output_results" # input("Enter the directory containing the CSV files: ")
     nx, ny, dt, = read_params() 
-    print(nx, ny, dt)
+    # print(nx, ny, dt)
     main(directory, nx, ny, dt)

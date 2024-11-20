@@ -150,11 +150,8 @@ Lattice::populate_Nodes()
     for(unsigned int x = 0; x<nx; ++x){
       unsigned int index = scalar_index(x, y);
       nodes[index] = Node(node_types[index], {x, y}, ux_in[index], uy_in[index], rho_in[index]);
-      if(node_types[index] == NodeType::boundary || node_types[index] == NodeType::outlet){
+      if(node_types[index] == NodeType::boundary){
         nodes[index].set_bounce_back_properties(bounce_back_dir[index], bounce_back_delta[index]);
-      }
-      if(node_types[index] == NodeType::outlet){
-        nodes[index].set_outlet_properties();
       }
       nodes[index].init_equilibrium();
     }
@@ -202,7 +199,7 @@ Lattice::run()
       for(unsigned int x = 0; x<nx; ++x)
       {
         unsigned int index = scalar_index(x, y);
-        if(node_types[index] != NodeType::solid && node_types[index] != NodeType::inlet)
+        if(node_types[index] == NodeType::fluid || node_types[index] == NodeType::boundary)
         {
           nodes[index].collide(*this);
           // if(node_types[index] == NodeType::boundary)
@@ -224,10 +221,10 @@ Lattice::run()
       for(unsigned int x = 0; x<nx; ++x)
       {
         unsigned int index = scalar_index(x, y);
-        if(node_types[index] != NodeType::solid && node_types[index] != NodeType::inlet)
+        if(node_types[index] == NodeType::fluid || node_types[index] == NodeType::boundary)
         {
           if(node_types[index] == NodeType::boundary){
-            nodes[index].apply_IBB(*this);
+            nodes[index].apply_BCs(*this);
             // nodes[index].compute_integrals();
           }
           nodes[index].update_f();

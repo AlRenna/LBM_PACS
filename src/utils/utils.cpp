@@ -51,3 +51,42 @@ lid_driven(double val, unsigned int nx, unsigned int ny, const std::string& file
     file.close();
     return ux_in;
 }
+
+std::vector<double>
+uniform_left_inlet(double val, unsigned int nx, unsigned int ny, const std::string& filename_nodes)
+{
+    std::vector<double> ux_in(nx*ny, 0.0);
+
+    std::ifstream file(filename_nodes);
+    if (!file.is_open()) {
+      throw std::runtime_error("Could not open file");
+    }
+
+    std::string line;
+    // Skip the first line
+    std::getline(file, line);
+
+    while (std::getline(file, line)) {
+        if (line.empty()) {
+        break;
+        }
+        std::stringstream ss(line);
+        std::string token;
+
+        // Read coordinates
+        std::getline(ss, token, ',');
+        unsigned int x = std::stoi(token);
+        std::getline(ss, token, ',');
+        unsigned int y = std::stoi(token);
+
+        // Read NodeType
+        std::getline(ss, token, ',');
+        unsigned int type = std::stoi(token);
+
+        if(type == 2){
+            ux_in[y*nx+x] = val;
+        }
+    }
+    file.close();
+    return ux_in;
+}

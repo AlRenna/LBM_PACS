@@ -4,7 +4,7 @@ import csv
 import json 
 
 # TODO: segnare come nodi di boundary quelli vicini ad un inlet e calcolare i delta
-# TODO: calcolare i delta per i nodi di oulet
+# TODO: calcolare i delta per i nodi di oulet, inlet, wall (1, 2, 3)
 
 def preprocess_image(image_path, cutoff_value=128):
 
@@ -110,11 +110,13 @@ def classify_points(image_path, num_points_x, num_points_y):
     x_spacing = width // (num_points_x - 1)
     y_spacing = height // (num_points_y - 1)
 
-    # Initialize lists to hold internal and external points
+    # Initialize lists to hold internal, solid, inlet and outlet points
     internal_points = []
-    external_points = []
+    solid_points = []
     inlet_points = []
     outlet_points = []
+
+    external_points = []
 
     # Classify points
     for i in range(num_points_y):
@@ -122,17 +124,20 @@ def classify_points(image_path, num_points_x, num_points_y):
             x_px = int(j * x_spacing) 
             y_px = int(i * y_spacing) 
             if r[y_px, x_px] == 255:  # Wall pixel
+                solid_points.append((j, i))
                 external_points.append((j, i))
             if g[y_px, x_px] == 255:  # inlet pixel
                 inlet_points.append((j, i))
+                external_points.append((j, i))
             if b[y_px, x_px] == 255:  # outlet pixel
                 outlet_points.append((j, i))
+                external_points.append((j, i))
             if grey[y_px, x_px]  == 0:  # Fluid pixel
                 internal_points.append((j, i))
             
-    return internal_points, external_points, inlet_points, outlet_points, r
+    return internal_points, solid_points, inlet_points, outlet_points, external_points, r+g+b
 
-def create_csv_with_point_types_and_distances(internal_points, external_points, inlet_points, outlet_points, boundary_points_distances, num_points_x, num_points_y, output_csv_path):
+def create_csv_with_point_types_and_distances(internal_points, solid_points, inlet_points, outlet_points, boundary_points_distances, num_points_x, num_points_y, output_csv_path):
     # Create a dictionary to store the type and distances for each point
     point_data = {}
 
@@ -140,8 +145,8 @@ def create_csv_with_point_types_and_distances(internal_points, external_points, 
     for x, y in internal_points:
         point_data[(x, y)] = [0] + [0.0] * 8
 
-    # Mark external points
-    for x, y in external_points:
+    # Mark solid points
+    for x, y in solid_points:
         point_data[(x, y)] = [1] + [0.0] * 8
     
     # Mark inlet points
@@ -172,7 +177,7 @@ def create_csv_with_point_types_and_distances(internal_points, external_points, 
                 else:
                     writer.writerow([j, i, 1] + [0.0] * 8)
 
-def draw_purple_squares(image_path, nx, ny, output_image_path):
+def draw_lattice(image_path, nx, ny, output_image_path):
     # Load the image
     image = cv2.imread(image_path)
     if image is None:
@@ -256,11 +261,21 @@ def read_params():
 
 def main():
     image_path, num_points_x, num_points_y = read_params()
+    # Adapt nx and ny to the image size
     num_points_x, num_points_y = adapt_nx_ny(image_path, num_points_x, num_points_y)
-    internal_points, external_points, inlet_points, outlet_points, image = classify_points(image_path, num_points_x, num_points_y)
-    internal_points, boundary_points_distances = identify_boundary_points_and_distances(internal_points, external_points, num_points_x, num_points_y, image)
-    create_csv_with_point_types_and_distances(internal_points, external_points, inlet_points, outlet_points, boundary_points_distances, num_points_x, num_points_y, 'lattice.csv')
-    draw_purple_squares(image_path, num_points_x, num_points_y, 'Lattice_nodes.png')
+
+    # Classify points to internal, solid, inlet, outlet and external (which is the sum of the previous three)
+    internal_points, solid_points, inlet_points, outlet_points, external_points, non_fluid_image = classify_points(image_path, num_points_x, num_points_y)
+    
+    # Identify boundary points and calculate distances wrt external points
+    internal_points, boundary_points_distances = identify_boundary_points_and_distances(internal_points, external_points, num_points_x, num_points_y, non_fluid_image)
+    
+    # Create a CSV file with the lattice information
+    create_csv_with_point_types_and_distances(internal_points, solid_points, inlet_points, outlet_points, boundary_points_distances, num_points_x, num_points_y, 'lattice.csv')
+    
+    # Create an image overlaid with the lattice
+    draw_lattice(image_path, num_points_x, num_points_y, 'Lattice_nodes.png')
+    
     return num_points_x, num_points_y
 
 if __name__ == "__main__":

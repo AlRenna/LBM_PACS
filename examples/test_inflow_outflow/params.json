@@ -1,5 +1,5 @@
 {
-    "image_path": "../../images/lid_driven_high_res.png",
+    "image_path": "../../images/simple_in_out_high_res.png",
     "lattice": {
         "Length": 1.0,
         "nx": 200,
@@ -11,7 +11,7 @@
         "T_final": 1.0
     },
     "test_info": {
-        "u_lid": 0.1,
+        "u_in": 0.1,
         "rho": 1.0
     },
     "generated_variables":{
