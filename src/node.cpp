@@ -90,7 +90,7 @@ Node::apply_BCs(const Lattice &lattice)
         apply_IBB(lattice, i);
       }
       else if(lattice.get_node(x_adj, y_adj).get_node_type() == NodeType::outlet){
-        apply_BB(lattice, i);
+        apply_anti_BB(lattice, i);
       }
       else{
         throw std::runtime_error("Invalid BCs type");
@@ -138,11 +138,14 @@ Node::apply_anti_BB(const Lattice &lattice, unsigned int i){
   double u_y_out = 1.5 * uy - 0.5 * uy_fluid; 
   double rho_out = 1.5 * rho - 0.5 * rho_fluid;
   
+  // impermeability wall condition
+  double rho_w = (2 * ((*f)[1] + (*f)[5] + (*f)[8]) + (*f)[0] + (*f)[2] + (*f)[4])/ (1 - ux);
+  
   (*f_adj)[bb_indexes[i]] = -(*f)[i]  +
-                          2 * weights[i] * rho_out *
+                          2 * weights[i] * rho_w * 1.1 *
                           (1 + 4.5 * (coeff[i][0] * u_x_out + coeff[i][1] * u_y_out) * (coeff[i][0] * u_x_out + coeff[i][1] * u_y_out) -
                           3.5 * (u_x_out * u_x_out + u_y_out * u_y_out));
-  if(coord[0] == 198 && coord[1] == 185){
+  if(coord[0] == 129 && coord[1] == 120){
     std::cout << "Outlet node: " << i << " " << bb_indexes[i] << " " << (*f)[i] << " " << (*f_adj)[bb_indexes[i]] << std::endl;
   }
 }
