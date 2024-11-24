@@ -138,15 +138,27 @@ Node::apply_anti_BB(const Lattice &lattice, unsigned int i){
   double u_y_out = 1.5 * uy - 0.5 * uy_fluid; 
   double rho_out = 1.5 * rho - 0.5 * rho_fluid;
   
-  // impermeability wall condition
-  double rho_w = (2 * ((*f)[1] + (*f)[5] + (*f)[8]) + (*f)[0] + (*f)[2] + (*f)[4])/ (1 - ux);
-  
+  // impermeability wall condition //TODO: check the value of 0.6
+  double rho_w =  0.6 *(2 * ((*f)[1] + (*f)[5] + (*f)[8]) + (*f)[0] + (*f)[2] + (*f)[4])/ (1 - ux);
+  // (*f_adj)[bb_indexes[i]] = 0.7*(*f)[i];  
   (*f_adj)[bb_indexes[i]] = -(*f)[i]  +
                           2 * weights[i] * rho_w * 1.1 *
                           (1 + 4.5 * (coeff[i][0] * u_x_out + coeff[i][1] * u_y_out) * (coeff[i][0] * u_x_out + coeff[i][1] * u_y_out) -
-                          3.5 * (u_x_out * u_x_out + u_y_out * u_y_out));
+                          3.5 * (u_x_out * u_x_out + u_y_out * u_y_out));// The output of ux_out is fine ux is positive exitig the domain
+  
   if(coord[0] == 129 && coord[1] == 120){
     std::cout << "Outlet node: " << i << " " << bb_indexes[i] << " " << (*f)[i] << " " << (*f_adj)[bb_indexes[i]] << std::endl;
+    if(i == 8){
+      double u = 0.;
+      double v = 0.;
+      double rhoinv = 1.0/rho;
+      for (unsigned int i = 0; i < 9; ++i)
+      {
+          u += rhoinv*coeff[i][0]*(*f)[i];
+          v += rhoinv*coeff[i][1]*(*f)[i];
+      }
+      std::cout << "Outlet node: " << i << " " << bb_indexes[i] << "ux: " << ux << "   uy: " << uy << std::endl;
+    }
   }
 }
 

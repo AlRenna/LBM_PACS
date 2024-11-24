@@ -6,6 +6,58 @@ import json
 # TODO: segnare come nodi di boundary quelli vicini ad un inlet e calcolare i delta
 # TODO: calcolare i delta per i nodi di oulet, inlet, wall (1, 2, 3)
 
+def read_params():
+    # Read the JSON file
+    with open('params.json', 'r') as file:
+        params = json.load(file)
+    
+    # Extract the variables
+    image_path = params['image_path']
+    num_points_x = params["lattice"]['nx']
+    num_points_y = params["lattice"]['ny']
+    
+    return image_path, num_points_x, num_points_y
+
+def adapt_nx_ny(image_path, nx, ny):
+    image = cv2.imread(image_path)
+    if image is None:
+        raise ValueError("Image not found or unable to load.")
+    
+    # Get image dimensions
+    height, width, _ = image.shape
+    height = height - 1
+    width = width - 1
+
+    # Calculate the spacing between points
+    x_spacing = width // (nx - 1)
+    y_spacing = height // (ny - 1)
+
+    nx = width // x_spacing + 1
+    ny = height // y_spacing + 1
+    
+    print(f"NEW nx: {nx}, ny: {ny}")
+
+    # Read the JSON file
+    with open('params.json', 'r') as file:
+        params = json.load(file)
+    
+    # Update the JSON file with new values
+    params["generated_variables"]['new_nx'] = nx
+    params["generated_variables"]['new_ny'] = ny
+
+    # Calculate the time interval
+    length = params["lattice"]['Length']
+    dt  = np.sqrt(3) *  length/ np.sqrt(nx * nx + ny * ny)
+    iterations = int(np.ceil(params["time"]['T_final'] / dt))
+    params["generated_variables"]['dt'] = dt
+    params["generated_variables"]['iterations'] = iterations
+    
+    # Write the updated JSON file
+    with open('params.json', 'w') as file:
+        json.dump(params, file, indent=4)
+    
+    return nx, ny
+
 def preprocess_image(image_path, cutoff_value=128):
 
     # Split the original image into its RGB components and the greyscale image
@@ -21,6 +73,47 @@ def preprocess_image(image_path, cutoff_value=128):
     _, grey = cv2.threshold(grey, 30, 255, cv2.THRESH_BINARY)
 
     return r, g, b, grey
+
+def classify_points(image_path, num_points_x, num_points_y):
+    
+    # Preprocess the image to r,g,b adn greyscale each corresponding to wall, inlet, outlet and fluid pixels
+    r,g,b,grey = preprocess_image(image_path)
+    
+    # Get image dimensions
+    height, width = r.shape
+    height = height - 1
+    width = width - 1
+
+    # Calculate the spacing between points 
+    x_spacing = width // (num_points_x - 1)
+    y_spacing = height // (num_points_y - 1)
+
+    # Initialize lists to hold internal, solid, inlet and outlet points
+    internal_points = []
+    solid_points = []
+    inlet_points = []
+    outlet_points = []
+
+    external_points = []
+
+    # Classify points
+    for i in range(num_points_y):
+        for j in range(num_points_x):
+            x_px = int(j * x_spacing) 
+            y_px = int(i * y_spacing) 
+            if r[y_px, x_px] == 255:  # Wall pixel
+                solid_points.append((j, i))
+                external_points.append((j, i))
+            if g[y_px, x_px] == 255:  # inlet pixel
+                inlet_points.append((j, i))
+                external_points.append((j, i))
+            if b[y_px, x_px] == 255:  # outlet pixel
+                outlet_points.append((j, i))
+                external_points.append((j, i))
+            if grey[y_px, x_px]  == 0:  # Fluid pixel
+                internal_points.append((j, i))
+            
+    return internal_points, solid_points, inlet_points, outlet_points, external_points, r+g+b
 
 def relative_cutoff_distance(image, coord1, coord2):
     x1 = coord1[0]
@@ -96,47 +189,6 @@ def identify_boundary_points_and_distances(internal_points, external_points, num
 
     return internal_points, boundary_points_distances
 
-def classify_points(image_path, num_points_x, num_points_y):
-    
-    # Preprocess the image to r,g,b adn greyscale each corresponding to wall, inlet, outlet and fluid pixels
-    r,g,b,grey = preprocess_image(image_path)
-    
-    # Get image dimensions
-    height, width = r.shape
-    height = height - 1
-    width = width - 1
-
-    # Calculate the spacing between points (remove //)
-    x_spacing = width // (num_points_x - 1)
-    y_spacing = height // (num_points_y - 1)
-
-    # Initialize lists to hold internal, solid, inlet and outlet points
-    internal_points = []
-    solid_points = []
-    inlet_points = []
-    outlet_points = []
-
-    external_points = []
-
-    # Classify points
-    for i in range(num_points_y):
-        for j in range(num_points_x):
-            x_px = int(j * x_spacing) 
-            y_px = int(i * y_spacing) 
-            if r[y_px, x_px] == 255:  # Wall pixel
-                solid_points.append((j, i))
-                external_points.append((j, i))
-            if g[y_px, x_px] == 255:  # inlet pixel
-                inlet_points.append((j, i))
-                external_points.append((j, i))
-            if b[y_px, x_px] == 255:  # outlet pixel
-                outlet_points.append((j, i))
-                external_points.append((j, i))
-            if grey[y_px, x_px]  == 0:  # Fluid pixel
-                internal_points.append((j, i))
-            
-    return internal_points, solid_points, inlet_points, outlet_points, external_points, r+g+b
-
 def create_csv_with_point_types_and_distances(internal_points, solid_points, inlet_points, outlet_points, boundary_points_distances, num_points_x, num_points_y, output_csv_path):
     # Create a dictionary to store the type and distances for each point
     point_data = {}
@@ -207,57 +259,7 @@ def draw_lattice(image_path, nx, ny, output_image_path):
     # Save the modified image
     cv2.imwrite(output_image_path, image)
 
-def adapt_nx_ny(image_path, nx, ny):
-    image = cv2.imread(image_path)
-    if image is None:
-        raise ValueError("Image not found or unable to load.")
-    
-    # Get image dimensions
-    height, width, _ = image.shape
-    height = height - 1
-    width = width - 1
 
-    # Calculate the spacing between points
-    x_spacing = width // (nx - 1)
-    y_spacing = height // (ny - 1)
-
-    nx = width // x_spacing + 1
-    ny = height // y_spacing + 1
-    
-    print(f"NEW nx: {nx}, ny: {ny}")
-
-    # Read the JSON file
-    with open('params.json', 'r') as file:
-        params = json.load(file)
-    
-    # Update the JSON file with new values
-    params["generated_variables"]['new_nx'] = nx
-    params["generated_variables"]['new_ny'] = ny
-
-    # Calculate the time interval
-    length = params["lattice"]['Length']
-    dt  = np.sqrt(3) *  length/ np.sqrt(nx * nx + ny * ny)
-    iterations = int(np.ceil(params["time"]['T_final'] / dt))
-    params["generated_variables"]['dt'] = dt
-    params["generated_variables"]['iterations'] = iterations
-    
-    # Write the updated JSON file
-    with open('params.json', 'w') as file:
-        json.dump(params, file, indent=4)
-    
-    return nx, ny
-
-def read_params():
-    # Read the JSON file
-    with open('params.json', 'r') as file:
-        params = json.load(file)
-    
-    # Extract the variables
-    image_path = params['image_path']
-    num_points_x = params["lattice"]['nx']
-    num_points_y = params["lattice"]['ny']
-    
-    return image_path, num_points_x, num_points_y
 
 def main():
     image_path, num_points_x, num_points_y = read_params()

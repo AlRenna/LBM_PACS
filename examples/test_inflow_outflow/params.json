@@ -2,13 +2,13 @@
     "image_path": "../../images/simple_in_out_high_res.png",
     "lattice": {
         "Length": 1.0,
-        "nx": 200,
-        "ny": 200,
+        "nx": 130,
+        "ny": 130,
         "nu": 0.1
     },
     "time": {
         "save_iter": 10,
-        "T_final": 1.0
+        "T_final": 4.0
     },
     "test_info": {
         "u_in": 0.1,

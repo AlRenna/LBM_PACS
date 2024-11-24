@@ -176,13 +176,17 @@ Lattice::run()
   }
   
   std::string u_filename = "output_results/velocity_out.txt";
+  std::string ux_filename = "output_results/ux_out.txt";
+  std::string uy_filename = "output_results/uy_out.txt";
   std::string rho_filename = "output_results/rho_out.txt";
 
   std::ofstream u_file(u_filename);
+  std::ofstream ux_file(ux_filename);
+  std::ofstream uy_file(uy_filename);
   std::ofstream rho_file(rho_filename);
 
   // Save the initial conditions
-  writeResults(u_file, rho_file);
+  writeResults(u_file, ux_file, uy_file, rho_file);
   //writeResults(iter);
 
   iter = iter + 1;
@@ -243,7 +247,7 @@ Lattice::run()
     if( iter%save_iter == 0 || iter == max_iter-1)
     {
       std::cout << "Writing results\n" << std::endl;
-      writeResults(u_file, rho_file);
+      writeResults(u_file, ux_file, uy_file, rho_file);
     }
     iter = iter + 1;
 
@@ -261,16 +265,20 @@ Lattice::run()
 }
 
 void 
-Lattice::writeResults(std::ofstream &file_u, std::ofstream &file_rho) {
+Lattice::writeResults(std::ofstream &file_u, std::ofstream &file_ux, std::ofstream &file_uy, std::ofstream &file_rho) {
   // Save ux_out
   for (unsigned int y = 0; y < ny; ++y) {
     for (unsigned int x = 0; x < nx; ++x) {
       unsigned int index = scalar_index(x, y);
       file_u << std::sqrt(ux_out[index] * ux_out[index] + uy_out[index] * uy_out[index]) << " ";
+      file_ux<< ux_out[index] << " ";
+      file_uy<< uy_out[index] << " ";
       file_rho << rho_out[index] << " ";
     }
   }
   file_u << "\n";
+  file_ux << "\n";
+  file_uy << "\n";
   file_rho << "\n";
   
 }

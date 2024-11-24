@@ -86,7 +86,7 @@ class Lattice
      * 
      * @param 
      */
-    void writeResults(std::ofstream &file_u, std::ofstream &file_rho);
+    void writeResults(std::ofstream &file_u, std::ofstream &file_ux, std::ofstream &file_uy, std::ofstream &file_rho);
 
     /// @name Utility functions
     /// @{
