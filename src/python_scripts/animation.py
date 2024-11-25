@@ -37,7 +37,7 @@ def animate_array(array, dt, title, lattice_map):
     def update(frame):
         plt.clf()
         frame_data = np.where(lattice_map, array[:, :, frame], np.nan)
-        plt.imshow(frame_data, origin='upper', cmap='RdBu_r', interpolation='spline16', vmin=0, vmax=1)
+        plt.imshow(frame_data, origin='upper', cmap='RdBu_r', interpolation='spline16', vmin=min_val, vmax=max_val)
         plt.colorbar()
         plt.title(f"{title} - Time: {frame * dt :.2f}")
     
@@ -99,8 +99,8 @@ def main(directory, nx, ny, dt):
     u_array = read_file_to_array(os.path.join(directory, 'ux_out.txt'), nx, ny)
     v_array = read_file_to_array(os.path.join(directory, 'uy_out.txt'), nx, ny)
 
-    animate_velocity_field(velocity, u_array, v_array, dt, 'Vectorial Animation', lattice_map)
-    #animate_array(velocity, dt, 'Velocity Animation', lattice_map)
+    # animate_velocity_field(velocity, u_array, v_array, dt, 'Vectorial Animation', lattice_map)
+    animate_array(velocity, dt, 'Velocity Animation', lattice_map)
     animate_array(rho, dt, 'Rho Animation', lattice_map)
 
 

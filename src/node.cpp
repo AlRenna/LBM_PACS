@@ -139,10 +139,10 @@ Node::apply_anti_BB(const Lattice &lattice, unsigned int i){
   double rho_out = 1.5 * rho - 0.5 * rho_fluid;
   
   // impermeability wall condition //TODO: check the value of 0.6
-  double rho_w =  0.6 *(2 * ((*f)[1] + (*f)[5] + (*f)[8]) + (*f)[0] + (*f)[2] + (*f)[4])/ (1 - ux);
+  double rho_w =  0.8 *(2 * ((*f)[1] + (*f)[5] + (*f)[8]) + (*f)[0] + (*f)[2] + (*f)[4])/ (1 - ux);
   // (*f_adj)[bb_indexes[i]] = 0.7*(*f)[i];  
   (*f_adj)[bb_indexes[i]] = -(*f)[i]  +
-                          2 * weights[i] * rho_w * 1.1 *
+                          2 * weights[i] * rho_w *
                           (1 + 4.5 * (coeff[i][0] * u_x_out + coeff[i][1] * u_y_out) * (coeff[i][0] * u_x_out + coeff[i][1] * u_y_out) -
                           3.5 * (u_x_out * u_x_out + u_y_out * u_y_out));// The output of ux_out is fine ux is positive exitig the domain
   
