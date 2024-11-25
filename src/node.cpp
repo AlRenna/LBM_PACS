@@ -284,6 +284,13 @@ Node::compute_physical_quantities()
 }
 
 void
+Node::compute_integrals()
+{
+  // compute drag and lift
+  double drag = 0.0;
+  double lift = 0.0;
+}
+void
 Node::update_f()
 {
   f.swap(f_adj);

@@ -24,6 +24,7 @@ class Lattice;
 enum class NodeType
 {
   fluid,
+  obstacle,
   solid,
   inlet,
   outlet,
@@ -106,7 +107,7 @@ class Node
      * @brief Function to compute physical integrals such as lift and drag
      * 
      */
-    // void compute_integrals();
+    void compute_integrals();
 
 
     void update_f();

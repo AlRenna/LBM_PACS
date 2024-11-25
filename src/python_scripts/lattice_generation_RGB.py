@@ -65,19 +65,17 @@ def preprocess_image(image_path, cutoff_value=128):
     if original_image is None:
         raise ValueError("Image not found or unable to load.")
     b, g, r = cv2.split(original_image)
-    grey = cv2.cvtColor(original_image, cv2.COLOR_BGR2GRAY)
 
     _, r = cv2.threshold(r, cutoff_value, 255, cv2.THRESH_BINARY)
     _, g = cv2.threshold(g, cutoff_value, 255, cv2.THRESH_BINARY)
     _, b = cv2.threshold(b, cutoff_value, 255, cv2.THRESH_BINARY)
-    _, grey = cv2.threshold(grey, 30, 255, cv2.THRESH_BINARY)
 
-    return r, g, b, grey
+    return r, g, b, original_image
 
 def classify_points(image_path, num_points_x, num_points_y):
     
     # Preprocess the image to r,g,b adn greyscale each corresponding to wall, inlet, outlet and fluid pixels
-    r,g,b,grey = preprocess_image(image_path)
+    r,g,b,original_image = preprocess_image(image_path)
     
     # Get image dimensions
     height, width = r.shape
@@ -88,12 +86,12 @@ def classify_points(image_path, num_points_x, num_points_y):
     x_spacing = width // (num_points_x - 1)
     y_spacing = height // (num_points_y - 1)
 
-    # Initialize lists to hold internal, solid, inlet and outlet points
-    internal_points = []
+    # Initialize lists to hold fluid, solid, inlet and outlet points
+    fluid_points = []
+    obstacle_points = []
     solid_points = []
     inlet_points = []
     outlet_points = []
-
     external_points = []
 
     # Classify points
@@ -101,19 +99,22 @@ def classify_points(image_path, num_points_x, num_points_y):
         for j in range(num_points_x):
             x_px = int(j * x_spacing) 
             y_px = int(i * y_spacing) 
-            if r[y_px, x_px] == 255:  # Wall pixel
+            if (r[y_px, x_px] == 0 and g[y_px, x_px] == 0 and b[y_px, x_px] == 255):  # Wall pixel
                 solid_points.append((j, i))
                 external_points.append((j, i))
-            if g[y_px, x_px] == 255:  # inlet pixel
+            if (r[y_px, x_px] == 0 and g[y_px, x_px] == 255 and b[y_px, x_px] == 0):  # inlet pixel
                 inlet_points.append((j, i))
                 external_points.append((j, i))
-            if b[y_px, x_px] == 255:  # outlet pixel
+            if (r[y_px, x_px] == 255 and g[y_px, x_px] == 0 and b[y_px, x_px] == 0):  # outlet pixel
                 outlet_points.append((j, i))
                 external_points.append((j, i))
-            if grey[y_px, x_px]  == 0:  # Fluid pixel
-                internal_points.append((j, i))
-            
-    return internal_points, solid_points, inlet_points, outlet_points, external_points, r+g+b
+            if (r[y_px, x_px] == 255 and g[y_px, x_px] == 255 and b[y_px, x_px] == 255): # obstacle pixel 
+                obstacle_points.append((j, i))
+                external_points.append((j, i))
+            if (r[y_px, x_px] == 0 and g[y_px, x_px] == 0 and b[y_px, x_px] == 0):  # Fluid pixel
+                fluid_points.append((j, i))
+
+    return fluid_points, obstacle_points, solid_points, inlet_points, outlet_points, external_points, original_image
 
 def relative_cutoff_distance(image, coord1, coord2):
     x1 = coord1[0]
@@ -141,14 +142,14 @@ def relative_cutoff_distance(image, coord1, coord2):
 
     raise ValueError("No color change detected between the two coordinates.")
 
-def remove_boundary_points_from_internal(internal_points_set, boundary_points_distances):
+def remove_boundary_points_from_fluid(fluid_points_set, boundary_points_distances):
     for boundary_point in boundary_points_distances:
         point = (boundary_point[0], boundary_point[1])
-        if point in internal_points_set:
-            internal_points_set.remove(point)
-    return list(internal_points_set)
+        if point in fluid_points_set:
+            fluid_points_set.remove(point)
+    return list(fluid_points_set)
 
-def identify_boundary_points_and_distances(internal_points, external_points, num_points_x, num_points_y, image):
+def identify_boundary_points_and_distances(fluid_points, external_points, num_points_x, num_points_y, image):
     boundary_points_distances = []
 
     # Define the 8 possible directions (E, N, W, S, NE, NW, SW, SE)
@@ -163,58 +164,62 @@ def identify_boundary_points_and_distances(internal_points, external_points, num
     x_spacing = width // (num_points_x - 1)
     y_spacing = height // (num_points_y - 1)
 
-    # Convert internal_points to a set for faster lookup
-    internal_points_set = set(internal_points)
+    # Convert fluid_points to a set for faster lookup
+    fluid_points_set = set(fluid_points)
 
     for ext_point in external_points:
         x, y = ext_point
         for (dx, dy) in directions :
             distance = 0.0
 
-            # Check if the adjacent point is internal
+            # Check if the adjacent point is fluid
             x_adj, y_adj = x + dx, y + dy
-            if (x_adj, y_adj) in internal_points_set:
+            if (x_adj, y_adj) in fluid_points_set:
                 #Convert to pixel coordinates
                 x_px = int(x * x_spacing) 
                 y_px = int(y * y_spacing) 
                 x_adj_px = int(x_adj * x_spacing) 
                 y_adj_px = int(y_adj * y_spacing) 
 
-                #internal_points_set.remove((adj_x, adj_y))
+                #fluid_points_set.remove((adj_x, adj_y))
                 distance = relative_cutoff_distance(image, (x_adj_px,y_adj_px), (x_px,y_px))
                 boundary_points_distances.append((x_adj, y_adj, -dx, -dy, distance))
 
-    # Remove boundary points from internal points
-    internal_points = remove_boundary_points_from_internal(internal_points_set, boundary_points_distances)
+    # Remove boundary points from fluid points
+    fluid_points = remove_boundary_points_from_fluid(fluid_points_set, boundary_points_distances)
 
-    return internal_points, boundary_points_distances
+    return fluid_points, boundary_points_distances
 
-def create_csv_with_point_types_and_distances(internal_points, solid_points, inlet_points, outlet_points, boundary_points_distances, num_points_x, num_points_y, output_csv_path):
+def create_csv_with_point_types_and_distances(fluid_points, obstacle_points, solid_points, inlet_points, outlet_points, boundary_points_distances, num_points_x, num_points_y, output_csv_path):
     # Create a dictionary to store the type and distances for each point
     point_data = {}
 
-    # Mark internal points
-    for x, y in internal_points:
+    # Mark fluid points
+    for x, y in fluid_points:
         point_data[(x, y)] = [0] + [0.0] * 8
+
+    # Mark obstacle points
+    for x, y in obstacle_points:
+        point_data[(x, y)] = [1] + [0.0] * 8
 
     # Mark solid points
     for x, y in solid_points:
-        point_data[(x, y)] = [1] + [0.0] * 8
+        point_data[(x, y)] = [2] + [0.0] * 8
     
     # Mark inlet points
     for x, y in inlet_points:
-        point_data[(x, y)] = [2] + [0.0] * 8
+        point_data[(x, y)] = [3] + [0.0] * 8
 
     # Mark outlet points
     for x, y in outlet_points:
-        point_data[(x, y)] = [3] + [0.0] * 8
+        point_data[(x, y)] = [4] + [0.0] * 8
 
     # Mark boundary points and store distances
     directions = [(1,0), (0,-1), (-1,0), (0,1), (1,-1), (-1,-1), (-1,1), (1,1)]
 
     for x, y, dx, dy, distance in boundary_points_distances:
         if (x, y) not in point_data:
-            point_data[(x, y)] = [4] + [0.0] * 8
+            point_data[(x, y)] = [5] + [0.0] * 8
         direction_index = directions.index((dx, dy))
         point_data[(x, y)][1 + direction_index] = distance
 
@@ -266,14 +271,14 @@ def main():
     # Adapt nx and ny to the image size
     num_points_x, num_points_y = adapt_nx_ny(image_path, num_points_x, num_points_y)
 
-    # Classify points to internal, solid, inlet, outlet and external (which is the sum of the previous three)
-    internal_points, solid_points, inlet_points, outlet_points, external_points, non_fluid_image = classify_points(image_path, num_points_x, num_points_y)
+    # Classify points to fluid, obstacle, solid, inlet, outlet and external (which is the sum of the previous three)
+    fluid_points, obstacle_points, solid_points, inlet_points, outlet_points, external_points, original_image = classify_points(image_path, num_points_x, num_points_y)
     
     # Identify boundary points and calculate distances wrt external points
-    internal_points, boundary_points_distances = identify_boundary_points_and_distances(internal_points, external_points, num_points_x, num_points_y, non_fluid_image)
+    fluid_points, boundary_points_distances = identify_boundary_points_and_distances(fluid_points, external_points, num_points_x, num_points_y, original_image)
     
     # Create a CSV file with the lattice information
-    create_csv_with_point_types_and_distances(internal_points, solid_points, inlet_points, outlet_points, boundary_points_distances, num_points_x, num_points_y, 'lattice.csv')
+    create_csv_with_point_types_and_distances(fluid_points, obstacle_points, solid_points, inlet_points, outlet_points, boundary_points_distances, num_points_x, num_points_y, 'lattice.csv')
     
     # Create an image overlaid with the lattice
     draw_lattice(image_path, num_points_x, num_points_y, 'Lattice_nodes.png')

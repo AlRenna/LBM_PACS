@@ -229,12 +229,15 @@ Lattice::run()
         {
           if(node_types[index] == NodeType::boundary){
             nodes[index].apply_BCs(*this);
-            // nodes[index].compute_integrals();
           }
           nodes[index].update_f();
 
           nodes[index].compute_physical_quantities();
-          
+
+          //TODO: compute drag and lift? 
+          if(node_types[index] == NodeType::boundary){
+            //nodes[index].compute_integrals();
+          }
 
           ux_out[index] = nodes[index].get_ux();
           uy_out[index] = nodes[index].get_uy();
