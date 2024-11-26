@@ -38,10 +38,10 @@ lid_driven(double val, unsigned int nx, unsigned int ny, const std::string& file
         std::getline(ss, token, ',');
         unsigned int type = std::stoi(token);
 
-        if(type == 1){
+        if(type == 2){
             ux_in[y*nx+x] = val;
         }
-        else if (type == 4){
+        else if (type == 5){
             for (int i = y*nx; i < y*nx+x; ++i) {
                 ux_in[i] = 0.0;
             }
