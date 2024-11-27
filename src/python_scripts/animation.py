@@ -88,24 +88,56 @@ def read_params():
     num_points_y = params["generated_variables"]['new_ny']
     dt = params["generated_variables"]['dt']
     save_iter = params["time"]['save_iter']
+    T_final = params["time"]['T_final']
+    max_iter = params["generated_variables"]['iterations']
     dt = dt * save_iter
     
-    return num_points_x, num_points_y, dt
+    return num_points_x, num_points_y, dt, T_final, max_iter
 
-def main(directory, nx, ny, dt):
+def plot_lift_drag(filename, T_final, max_iter, dt):
+    output_folder = "output_animations"
+    time = np.array(range(0, max_iter))
+    time = time * dt
+    output_file = os.path.join(output_folder, 'lift_drag.png')
+    
+    if not os.path.exists(filename):
+        return
+    
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+    
+
+    lift = list(map(float, lines[1].split()))
+    lift = np.array(lift)
+    drag = list(map(float, lines[3].split()))
+    drag = np.array(drag)
+    
+    plt.clf()
+    plt.plot(time , lift, label='Lift')
+    plt.plot(time, drag, label='Drag')
+    plt.xlabel('Time')
+    plt.ylabel('Force')
+    plt.title('Lift and Drag vs Time')
+    plt.legend()
+    # Save the plot //TODO save plot
+    plt.savefig(os.path.join(output_folder, 'lift_drag.png'), format='png')
+    print(f"Plot saved in {output_file}")
+
+def main(directory, nx, ny, dt, T_final, max_iter):
     lattice_map = read_lattice_map('lattice.csv', nx, ny)
     velocity = read_file_to_array(os.path.join(directory, 'velocity_out.txt'), nx, ny)
     rho = read_file_to_array(os.path.join(directory, 'rho_out.txt'), nx, ny)
     u_array = read_file_to_array(os.path.join(directory, 'ux_out.txt'), nx, ny)
     v_array = read_file_to_array(os.path.join(directory, 'uy_out.txt'), nx, ny)
 
-    # animate_velocity_field(velocity, u_array, v_array, dt, 'Vectorial Animation', lattice_map)
+    animate_velocity_field(velocity, u_array, v_array, dt, 'Vectorial Animation', lattice_map)
     animate_array(velocity, dt, 'Velocity Animation', lattice_map)
     animate_array(rho, dt, 'Rho Animation', lattice_map)
+    plot_lift_drag(os.path.join(directory, 'lift_&_drag.txt'), T_final, max_iter, dt)
 
 
 if __name__ == "__main__":
     directory = "output_results" # input("Enter the directory containing the CSV files: ")
-    nx, ny, dt, = read_params() 
+    nx, ny, dt, T_final, max_iter = read_params() 
     # print(nx, ny, dt)
-    main(directory, nx, ny, dt)
+    main(directory, nx, ny, dt, T_final, max_iter)

@@ -3,8 +3,8 @@ import numpy as np
 import csv
 import json 
 
-# TODO: segnare come nodi di boundary quelli vicini ad un inlet e calcolare i delta
-# TODO: calcolare i delta per i nodi di oulet, inlet, wall (1, 2, 3)
+
+# TODO: calcolare i delta per i nodi di oulet, inlet, wall, obstacle (1, 2, 3)
 
 def read_params():
     # Read the JSON file
@@ -60,22 +60,30 @@ def adapt_nx_ny(image_path, nx, ny):
 
 def preprocess_image(image_path, cutoff_value=128):
 
-    # Split the original image into its RGB components and the greyscale image
+    # Split the original image into its RGB components and the grayscale image
     original_image = cv2.imread(image_path)
     if original_image is None:
         raise ValueError("Image not found or unable to load.")
     b, g, r = cv2.split(original_image)
+    # gray = cv2.cvtColor(original_image, cv2.COLOR_BGR2GRAY)
 
     _, r = cv2.threshold(r, cutoff_value, 255, cv2.THRESH_BINARY)
     _, g = cv2.threshold(g, cutoff_value, 255, cv2.THRESH_BINARY)
     _, b = cv2.threshold(b, cutoff_value, 255, cv2.THRESH_BINARY)
+    # _, gray = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
+    gray = (r + g + b) 
 
-    return r, g, b, original_image
+    # cv2.imwrite('r.png', r)
+    # cv2.imwrite('g.png', g)
+    # cv2.imwrite('b.png', b)
+    # cv2.imwrite('gray.png', gray)
+
+    return r, g, b, gray
 
 def classify_points(image_path, num_points_x, num_points_y):
     
-    # Preprocess the image to r,g,b adn greyscale each corresponding to wall, inlet, outlet and fluid pixels
-    r,g,b,original_image = preprocess_image(image_path)
+    # Preprocess the image to r,g,b adn grayscale each corresponding to wall, inlet, outlet and fluid pixels
+    r,g,b,gray = preprocess_image(image_path)
     
     # Get image dimensions
     height, width = r.shape
@@ -114,7 +122,7 @@ def classify_points(image_path, num_points_x, num_points_y):
             if (r[y_px, x_px] == 0 and g[y_px, x_px] == 0 and b[y_px, x_px] == 0):  # Fluid pixel
                 fluid_points.append((j, i))
 
-    return fluid_points, obstacle_points, solid_points, inlet_points, outlet_points, external_points, original_image
+    return fluid_points, obstacle_points, solid_points, inlet_points, outlet_points, external_points, gray
 
 def relative_cutoff_distance(image, coord1, coord2):
     x1 = coord1[0]
@@ -263,6 +271,7 @@ def draw_lattice(image_path, nx, ny, output_image_path):
 
     # Save the modified image
     cv2.imwrite(output_image_path, image)
+
 
 
 

@@ -83,7 +83,7 @@ uniform_left_inlet(double val, unsigned int nx, unsigned int ny, const std::stri
         std::getline(ss, token, ',');
         unsigned int type = std::stoi(token);
 
-        if(type == 2){
+        if(type == 3){
             ux_in[y*nx+x] = val;
         }
     }
