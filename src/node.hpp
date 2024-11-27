@@ -31,6 +31,19 @@ enum class NodeType
   boundary
 };
 
+// enum class BoundaryNodePosition
+// {
+//   none,
+//   top,
+//   bottom,
+//   left,
+//   right,
+//   inner_top_left,
+//   top_right,
+//   bottom_left,
+//   bottom_right
+// };
+
 /**
  * @brief Node class. Contains the information of the node in the lattice such as: type, position, velocity
  * distribution and physical quantities.
@@ -70,7 +83,7 @@ class Node
 
     /**
      * @brief Streaming step.
-     * Stream the distribution functions to the adjacent nodes.
+     * Stream the distribution functions to the adjacent nodes (unless BCs are to be applied).
      * 
      */
     void stream(Lattice& lattice);
@@ -97,6 +110,9 @@ class Node
 
     void apply_anti_BB(const Lattice &lattice, unsigned int i);
 
+    // void apply_NEBB(const Lattice &lattice, unsigned int i);
+
+    void update_f();
 
     /**
      * @brief Compute the physical quantities (velocity components and density) from the distribution functions.
@@ -107,24 +123,27 @@ class Node
      * @brief Function to compute physical integrals such as lift and drag
      * 
      */
-    void compute_integrals();
+    void compute_drag_and_lift(const Lattice &lattice);
 
-
-    void update_f();
 
 
 
     /// @name Getters
     /// @{ 
     
+    // TODO: check if needed
     /**
      * @brief Get the distribution function at index (direction) i.
      */
-    inline double get_f(int i) const { return (*f)[i]; }
+    // inline double get_f(int i) const { return (*f)[i]; }
+    // inline double get_f_pre(int i) const { return (*f_pre)[i]; }
+    // inline double get_f_post(int i) const { return (*f_post)[i]; }
 
     inline double get_ux() const { return ux; }
     inline double get_uy() const { return uy; }
     inline double get_rho() const { return rho; }
+    inline double get_drag() const { return drag; }
+    inline double get_lift() const { return lift; }
     inline NodeType get_node_type() const { return node_type; }
     
     /// @}
@@ -195,7 +214,11 @@ class Node
      * 
      * 7 4 8
      */
-    std::unique_ptr<std::vector<double>> f;
+    // std::unique_ptr<std::vector<double>> f;
+
+    std::unique_ptr<std::vector<double>> f_pre;
+
+    std::unique_ptr<std::vector<double>> f_post;
 
     /// Velocity distribution functions from adjacent nodes
     std::unique_ptr<std::vector<double>> f_adj;
@@ -208,12 +231,15 @@ class Node
     double rho;
 
     /// Local drag
-    // double drag;
+    double drag;
     /// Local lift
-    // double lift;
+    double lift;
 
     /// Node type (fluid, boundary, solid)
     NodeType node_type;
+    // /// Position of the boundary node (if it's a boundary node)
+    // BoundaryNodePosition boundary_node_position;
+
     /// Directions in which the BCs are to be applied around the node (if it's a boundary node or outlet node)
     std::vector<bool> bounce_back_dir;
     /// Distance between the node and the wall (if it's a boundary node), along the direction of bounce_back_dir

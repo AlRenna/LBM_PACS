@@ -69,6 +69,7 @@ class Lattice
 
     void readNodesFromCSV(const std::string& filename_nodes);
 
+    // void find_boundary_nodes_position();
 
     /**
      * @brief Function to populate the lattice nodes with the ICs and BCs. 
@@ -152,6 +153,8 @@ class Lattice
     std::vector<Node> nodes;
     /// Node types (fluid, solid, etc.)
     std::vector<NodeType> node_types;
+    // /// Boundary node positions
+    // std::vector<BoundaryNodePosition> boundary_node_positions;
     /// Directions in which the BCs are to be applied for each boundary node 
     std::vector<std::vector<bool>> bounce_back_dir;
     /// Distances between the node and the wall along the direction of bounce_back_dir for each boundary node
@@ -177,9 +180,9 @@ class Lattice
     std::vector<double> rho_out;
 
     /// Output lift
-    // double lift;
+    std::vector<double> lift_out;
     /// Output drag
-    // double drag;
+    std::vector<double> drag_out;
     /// @}
 
     /// @name Physical parameters
