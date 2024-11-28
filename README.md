@@ -20,6 +20,7 @@ This folder will contain all of the generated content. Executables will be compi
 mkdir build
 cd build
 cmake ..
+make
 ```
 
 ### Compile and execute an example
@@ -32,6 +33,10 @@ make
 To run the test with different properties modify the `params.json` file to control the simulation parameters, such as the image of the fluid dynamics environment, grid size, boundary conditions, and  viscosity. 
 
 ### Generate Code Documentation (Doxygen)
+The docs folder contains the documentation of the repository. 
+```bash
+doxygen Doxyfile
+```
 
 ## The LBM implementation
 The goal of this code is to simulate fluid dynamics using the Lattice Boltzmann Method (LBM). This computational approach is particularly useful for modeling fluid systems with a relatively simple numeric scheme the can be extended for parallel computation. 

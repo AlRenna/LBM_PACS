@@ -1,3 +1,4 @@
+# Python scripts
 ## lattice_generation_RGB.py
 - Read the given image, nx and ny
 - Create a **lattice** of **nodes** over the image, adpating the number of point (nx and ny) if their are not sufficient to evenly cover the entire surface

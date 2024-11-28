@@ -9,7 +9,7 @@ build/
 docs/
 *html*
 *latex*
-*Doxyfile*
+# *Doxyfile*
 *.tex*
 *.sty*
 *.dot*
