@@ -31,19 +31,6 @@ enum class NodeType
   boundary
 };
 
-// enum class BoundaryNodePosition
-// {
-//   none,
-//   top,
-//   bottom,
-//   left,
-//   right,
-//   inner_top_left,
-//   top_right,
-//   bottom_left,
-//   bottom_right
-// };
-
 /**
  * @brief Node class. Contains the information of the node in the lattice such as: type, position, velocity
  * distribution and physical quantities.
@@ -64,6 +51,10 @@ class Node
     Node(NodeType node_type_, std::vector<unsigned int> coord_,
         double ux_, double uy_, double rho_);
 
+    /**
+     * @brief Default constructor
+     * 
+     */
     Node() = default;
     // ~Node();
 
@@ -106,12 +97,35 @@ class Node
      */
     void apply_IBB(const Lattice &lattice, unsigned int i);
 
+    /**
+     * @brief Apply the Simple Bounce-Back.
+     * Use the post-collision distribution to compute the BB:
+     * 
+     * f_bb_i = f_i(x_b)
+     */
     void apply_BB(const Lattice &lattice, unsigned int i);
 
+
+    /**
+     * @brief Apply the Anti Bounce-Back.
+     * Use the post-collision distribution to compute the ABB:
+     * 
+     * f_bb_i = -f_i(x_b) + 2*w_i*rho_w*(1 + 4.5*(c_i.u_w)^2 - 3.5(u_w^2))
+     */
     void apply_anti_BB(const Lattice &lattice, unsigned int i);
 
-    // void apply_NEBB(const Lattice &lattice, unsigned int i);
+    /**
+     * @brief Function to check if the node in the backward direction is a fluid or boundary node.
+     * 
+     * @return true 
+     * @return false 
+     */
+    bool check_backward(const Lattice &lattice, unsigned int x,unsigned int y, unsigned int i);
 
+    /**
+     * @brief Update the distribution functions. Swap the pre-collision with the adjecient distibution pointer for the next iteration.
+     * 
+     */
     void update_f();
 
     /**
@@ -125,27 +139,22 @@ class Node
      */
     void compute_drag_and_lift(const Lattice &lattice);
 
-
-
-
     /// @name Getters
     /// @{ 
-    
-    // TODO: check if needed
-    /**
-     * @brief Get the distribution function at index (direction) i.
-     */
-    // inline double get_f(int i) const { return (*f)[i]; }
-    // inline double get_f_pre(int i) const { return (*f_pre)[i]; }
-    // inline double get_f_post(int i) const { return (*f_post)[i]; }
 
+    /// Get the orizontal velocity component
     inline double get_ux() const { return ux; }
+    /// Get the vertical velocity component
     inline double get_uy() const { return uy; }
+    /// Get the density
     inline double get_rho() const { return rho; }
+    /// Get the drag value
     inline double get_drag() const { return drag; }
+    /// Get the lift value
     inline double get_lift() const { return lift; }
+    /// Get the NodeType
     inline NodeType get_node_type() const { return node_type; }
-    
+
     /// @}
 
     /// @name Setters
@@ -168,7 +177,6 @@ class Node
      * @param value 
      */
     inline void set_f_adj(int i, double value) { (*f_adj)[i] = value; }
-
     
     /// @}
 

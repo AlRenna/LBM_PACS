@@ -10,30 +10,6 @@
 
 //TODO: Fare un esempio con ala (ostacolo)
 
-// TODO: calcolo drag e lift (SOLO SUI NODI BOUNDARY ATTORNO ALL'OSTACOLO) capire se inserire un nuovo type (colore) per identificare l'ostacolo
-
-// TODO: cambia cmakelist copia immagini e altro (crea collegamento)
-
-Lattice::Lattice(unsigned int nx_, unsigned int ny_,
-                 double nu_)
-  : nx(nx_),
-    ny(ny_),
-    nu(nu_),
-    tau(3.0*nu+0.5)
-{
-  // TODO: update/remove this constructor
-  nodes.resize(nx*ny);
-  node_types.resize(nx*ny, NodeType::solid);
-  bounce_back_delta.resize(nx*ny, std::vector<double>(Node::dir, 0.0));
-  bounce_back_dir.resize(nx*ny, std::vector<bool>(Node::dir, false));
-  ux_in.resize(nx*ny, 0.);
-  uy_in.resize(nx*ny, 0.);
-  rho_in.resize(nx*ny, 1.0);
-  ux_out.resize(nx*ny, 0.);
-  uy_out.resize(nx*ny, 0.);
-  rho_out.resize(nx*ny, 1.0);
-}
-
 Lattice::Lattice()
 {
   std::ifstream param_file("params.json");
@@ -72,7 +48,6 @@ Lattice::Lattice()
   tau = 3.0 * nu + 0.5;
   nodes.resize(nx*ny);
   node_types.resize(nx*ny, NodeType::solid);
-  boundary_node_positions.resize(nx*ny, BoundaryNodePosition::none);
   bounce_back_delta.resize(nx*ny, std::vector<double>(Node::dir, 0.0));
   bounce_back_dir.resize(nx*ny, std::vector<bool>(Node::dir, false));
   ux_in.resize(nx*ny, 0.);
@@ -150,19 +125,6 @@ Lattice::readNodesFromCSV(const std::string& filename)
   file.close();
 }
 
-// void 
-// Lattice::find_boundary_nodes_position()
-// {
-//   for(unsigned int y = 0; y<ny; ++y){
-//     for(unsigned int x = 0; x<nx; ++x){
-//       unsigned int index = scalar_index(x, y);
-//       if(node_types[index] == NodeType::boundary){
-        
-//       }
-//     }
-//   }
-// }
-
 void
 Lattice::populate_Nodes()
 {
@@ -182,9 +144,6 @@ Lattice::populate_Nodes()
 void
 Lattice::run()
 {
-  // TODO: Check drag and lift
-  // TODO: Check if the boundary conditions are applied correctly for obstacle
-  // TODO: change double for loop to single for on index
   std::cout << "Running simulation\n" << std::endl;
   clock_t start_time = clock(); // Add this line
   unsigned int iter = 0;
@@ -334,8 +293,8 @@ Lattice::run()
 void 
 Lattice::writeResults(std::ofstream &file_u, std::ofstream &file_ux, std::ofstream &file_uy, std::ofstream &file_rho) {
   // Save ux_out
-  for (unsigned int y = 0; y < ny; ++y) {
-    for (unsigned int x = 0; x < nx; ++x) {
+  for(unsigned int y = 0; y<ny; ++y) {
+    for (unsigned int x = 0; x<nx; ++x) {
       unsigned int index = scalar_index(x, y);
       file_u << std::sqrt(ux_out[index] * ux_out[index] + uy_out[index] * uy_out[index]) << " ";
       file_ux<< ux_out[index] << " ";

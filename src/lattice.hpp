@@ -40,15 +40,9 @@ class Lattice
   public:
 
     /**
-     * @brief Constructor
+     * @brief Constructor. Reads the parameters from params.json file.
      * 
-     * @param nx_ Lattice size (x)
-     * @param ny_ Latice size (y)
-     * @param nu_ Viscosity of the fluid
      */
-    Lattice(unsigned int nx_, unsigned int ny_,
-            double nu_);
-
     Lattice();
 
     /**
@@ -66,10 +60,13 @@ class Lattice
                           const std::vector<double>& uy_in_, 
                           const std::vector<double>& rho_in_,
                           const std::string& filename_nodes);
-
+    
+    /**
+     * @brief Function to popolate the member of the lattice by reading a .cvs file containing the lattice information.
+     * 
+     * @param filename_nodes 
+     */
     void readNodesFromCSV(const std::string& filename_nodes);
-
-    // void find_boundary_nodes_position();
 
     /**
      * @brief Function to populate the lattice nodes with the ICs and BCs. 
@@ -153,8 +150,6 @@ class Lattice
     std::vector<Node> nodes;
     /// Node types (fluid, solid, etc.)
     std::vector<NodeType> node_types;
-    // /// Boundary node positions
-    // std::vector<BoundaryNodePosition> boundary_node_positions;
     /// Directions in which the BCs are to be applied for each boundary node 
     std::vector<std::vector<bool>> bounce_back_dir;
     /// Distances between the node and the wall along the direction of bounce_back_dir for each boundary node

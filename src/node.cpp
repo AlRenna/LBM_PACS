@@ -109,14 +109,16 @@ Node::apply_BCs(const Lattice &lattice)
     if(bounce_back_dir[i]){
       x_forward = coord[0] + coeff[i][0];
       y_forward = coord[1] + coeff[i][1];
+
+      NodeType type = lattice.get_node(x_forward, y_forward).get_node_type();
       
-      if(lattice.get_node(x_forward, y_forward).get_node_type() == NodeType::solid ||
-        lattice.get_node(x_forward, y_forward).get_node_type() == NodeType::obstacle ||
-        lattice.get_node(x_forward, y_forward).get_node_type() == NodeType::inlet){
-        // apply_IBB(lattice, i);
+      if(type == NodeType::solid ||
+        type == NodeType::obstacle ||
+        type == NodeType::inlet){
         apply_IBB(lattice, i);
+        // apply_BB(lattice, i);
       }
-      else if(lattice.get_node(x_forward, y_forward).get_node_type() == NodeType::outlet){
+      else if(type == NodeType::outlet){
         apply_anti_BB(lattice, i);
       }
       else{
@@ -129,6 +131,7 @@ Node::apply_BCs(const Lattice &lattice)
 void
 Node::apply_IBB(const Lattice &lattice, unsigned int i)
 {
+  
   // Interpolated Bounce-Back 
   // take the velocity at the wall node
   unsigned int x_forward = coord[0] + coeff[i][0];
@@ -136,21 +139,35 @@ Node::apply_IBB(const Lattice &lattice, unsigned int i)
   double ux_wall = lattice.get_node(x_forward, y_forward).get_ux();
   double uy_wall = lattice.get_node(x_forward, y_forward).get_uy();
 
-  unsigned int x_backward = coord[0] + coeff[bb_indexes[i]][0];
-  unsigned int y_backward = coord[1] + coeff[bb_indexes[i]][1];
+  NodeType type = lattice.get_node(x_forward, y_forward).get_node_type();
+  if(type == NodeType::outlet){
+    unsigned int x_backward = coord[0] + coeff[bb_indexes[i]][0];
+    unsigned int y_backward = coord[1] + coeff[bb_indexes[i]][1];
+    double ux_fluid = lattice.get_node(x_backward, y_backward).get_ux();
+    double uy_fluid = lattice.get_node(x_backward, y_backward).get_uy();
 
-  // since we have already collided and streamed, we take the post-collision value from f_adj
-  // f_adj_post_coll = lattice.get_node(x_forward, y_forward).get_f_post(i);
-  double f_adj_post_coll = (*f_adj)[i]; 
-  
-  (*f_adj)[bb_indexes[i]] = (2 * bounce_back_delta[i] * (*f_post)[i] + 
-                  (1 - 2 * bounce_back_delta[i]) * f_adj_post_coll) * 
-                  (bounce_back_delta[i] < 0.5) +
-                  (1. / (2 * bounce_back_delta[i]) * (*f_post)[i] + 
-                  ((2 * bounce_back_delta[i] - 1.) / (2 * bounce_back_delta[i])) * (*f_post)[bb_indexes[i]]) *
-                  (bounce_back_delta[i] >= 0.5) - 
-                  (ux_wall * coeff[i][0] + uy_wall * coeff[i][1]) * weights[i] * 6; // Wall velocity term (rho)
-  
+    ux_wall = 1.5 * ux - 0.5 * ux_fluid;
+    uy_wall = 1.5 * uy - 0.5 * uy_fluid; 
+  }
+
+  if(check_backward(lattice, coord[0], coord[1], i))
+  {
+    // since we have already collided and streamed, we take the post-collision value from f_adj
+    // f_adj_post_coll = lattice.get_node(x_forward, y_forward).get_f_post(i);
+    double f_adj_post_coll = (*f_adj)[i]; 
+    
+    (*f_adj)[bb_indexes[i]] = (2 * bounce_back_delta[i] * (*f_post)[i] + 
+                    (1 - 2 * bounce_back_delta[i]) * f_adj_post_coll) * 
+                    (bounce_back_delta[i] < 0.5) +
+                    (1. / (2 * bounce_back_delta[i]) * (*f_post)[i] + 
+                    ((2 * bounce_back_delta[i] - 1.) / (2 * bounce_back_delta[i])) * (*f_post)[bb_indexes[i]]) *
+                    (bounce_back_delta[i] >= 0.5) - 
+                    (ux_wall * coeff[i][0] + uy_wall * coeff[i][1]) * weights[i] * 6; // Wall velocity term (rho)
+  }
+  else
+  {
+    (*f_adj)[bb_indexes[i]] = (*f_post)[i];
+  }
 }
 
 void
@@ -161,9 +178,31 @@ Node::apply_BB(const Lattice &lattice, unsigned int i)
   unsigned int y_forward = coord[1] + coeff[i][1];
   double ux_wall = lattice.get_node(x_forward, y_forward).get_ux();
   double uy_wall = lattice.get_node(x_forward, y_forward).get_uy();
+  double rho_w = rho;
 
-  (*f_adj)[bb_indexes[i]] = (*f_post)[i] - 
+  NodeType type = lattice.get_node(x_forward, y_forward).get_node_type();
+  if(type == NodeType::outlet){
+    unsigned int x_backward = coord[0] + coeff[bb_indexes[i]][0];
+    unsigned int y_backward = coord[1] + coeff[bb_indexes[i]][1];
+    double ux_fluid = lattice.get_node(x_backward, y_backward).get_ux();
+    double uy_fluid = lattice.get_node(x_backward, y_backward).get_uy();
+    double ux_fluid2 = lattice.get_node(x_backward + coeff[bb_indexes[i]][0], y_backward + coeff[bb_indexes[i]][1]).get_ux();
+    double uy_fluid2 = lattice.get_node(x_backward + coeff[bb_indexes[i]][0], y_backward + coeff[bb_indexes[i]][1]).get_uy();
+
+    ux_wall = (ux + ux_fluid)/2.;
+    uy_wall = (ux + uy_fluid)/2.;
+    rho_w =  (2 * ((*f_post)[1] + (*f_post)[5] + (*f_post)[8]) + (*f_post)[0] + (*f_post)[2] + (*f_post)[4])/ (1 - ux_wall);
+  }
+  
+  if(check_backward(lattice, coord[0], coord[1], i))
+  {
+    (*f_adj)[bb_indexes[i]] = (*f_post)[i] - 
                   (ux_wall * coeff[i][0] + uy_wall * coeff[i][1]) * rho * weights[i] * 6;
+  }
+  else
+  {
+    (*f_adj)[bb_indexes[i]] = (*f_post)[i];
+  }
 }
 
 void 
@@ -171,46 +210,74 @@ Node::apply_anti_BB(const Lattice &lattice, unsigned int i)
 {
   // Anti Bounce-Back for outlet nodes
   // take the velocity at the fluid node opposite to the outlet node
-  unsigned int x_forward = coord[0] + coeff[bb_indexes[i]][0];
-  unsigned int y_forward = coord[1] + coeff[bb_indexes[i]][1];
-  double ux_fluid = lattice.get_node(x_forward, y_forward).get_ux();
-  double uy_fluid = lattice.get_node(x_forward, y_forward).get_uy();
-  double rho_fluid = lattice.get_node(x_forward, y_forward).get_rho();
+  // unsigned int x_backward = coord[0] + coeff[bb_indexes[i]][0];
+  // unsigned int y_backward = coord[1] + coeff[bb_indexes[i]][1];
+  // double ux_fluid = lattice.get_node(x_backward, y_backward).get_ux();
+  // double uy_fluid = lattice.get_node(x_backward, y_backward).get_uy();
+  // double rho_fluid = lattice.get_node(x_backward, y_backward).get_rho();
 
-  // Extrapolated outlet velocity
-  double u_x_out = 1.5 * ux - 0.5 * ux_fluid;
-  double u_y_out = 1.5 * uy - 0.5 * uy_fluid; 
-  double rho_out = 1.5 * rho - 0.5 * rho_fluid;
-
-
+  // // Extrapolated outlet velocity
+  // double u_x_out = 1.5 * ux - 0.5 * ux_fluid;
+  // double u_y_out = 1.5 * uy - 0.5 * uy_fluid; 
+  // double rho_out = 1.5 * rho - 0.5 * rho_fluid;
   
-  //TODO: Add function to compute rho_w with respect to the outlet position
-  // Permeability wall condition 
-  double rho_w =  0.8 * (2 * ((*f_post)[1] + (*f_post)[5] + (*f_post)[8]) + (*f_post)[0] + (*f_post)[2] + (*f_post)[4])/ (1 - ux);
+  // //TODO: Add function to compute rho_w with respect to the outlet position
+  // // Permeability wall condition 
+  // double rho_w =  0.8 * (2 * ((*f_post)[1] + (*f_post)[5] + (*f_post)[8]) + (*f_post)[0] + (*f_post)[2] + (*f_post)[4])/ (1 - ux);
     
-  // (*f_adj)[bb_indexes[i]] = -(*f_post)[i]  +
-  //                         2 * weights[i] * rho_w *
-  //                         (1 + 4.5 * (coeff[i][0] * u_x_out + coeff[i][1] * u_y_out) * (coeff[i][0] * u_x_out + coeff[i][1] * u_y_out) -
-  //                         3.5 * (u_x_out * u_x_out + u_y_out * u_y_out));// The output of ux_out is fine ux is positive exitig the domain
-  (*f_adj)[bb_indexes[i]] = (*f_post)[i] - 
-                  (u_x_out * coeff[i][0] + u_y_out * coeff[i][1]) * rho_out * weights[i] * 6;
+  // // (*f_adj)[bb_indexes[i]] = -(*f_post)[i]  +
+  // //                         2 * weights[i] * rho_w *
+  // //                         (1 + 4.5 * (coeff[i][0] * u_x_out + coeff[i][1] * u_y_out) * (coeff[i][0] * u_x_out + coeff[i][1] * u_y_out) -
+  // //                         3.5 * (u_x_out * u_x_out + u_y_out * u_y_out));// The output of ux_out is fine ux is positive exitig the domain
+  // (*f_adj)[bb_indexes[i]] = (*f_post)[i] - 
+  //                 (u_x_out * coeff[i][0] + u_y_out * coeff[i][1]) * rho_out * weights[i] * 6;
+
+  unsigned int x_forward = coord[0] + coeff[i][0];
+  unsigned int y_forward = coord[1] + coeff[i][1];
+  double ux_wall = lattice.get_node(x_forward, y_forward).get_ux();
+  double uy_wall = lattice.get_node(x_forward, y_forward).get_uy();
+  double rho_w = rho;
+
+  NodeType type = lattice.get_node(x_forward, y_forward).get_node_type();
+  if(type == NodeType::outlet){
+    unsigned int x_backward = coord[0] + coeff[bb_indexes[i]][0];
+    unsigned int y_backward = coord[1] + coeff[bb_indexes[i]][1];
+    double ux_fluid = lattice.get_node(x_backward, y_backward).get_ux();
+    double uy_fluid = lattice.get_node(x_backward, y_backward).get_uy();
+    double ux_fluid2 = lattice.get_node(x_backward + coeff[bb_indexes[i]][0], y_backward + coeff[bb_indexes[i]][1]).get_ux();
+    double uy_fluid2 = lattice.get_node(x_backward + coeff[bb_indexes[i]][0], y_backward + coeff[bb_indexes[i]][1]).get_uy();
+
+    ux_wall = (ux + ux_fluid)/2.;
+    uy_wall = (ux + uy_fluid)/2.;
+    rho_w =  0.8 * (2 * ((*f_post)[1] + (*f_post)[5] + (*f_post)[8]) + (*f_post)[0] + (*f_post)[2] + (*f_post)[4])/ (1 - ux_wall);
+  }
+  
+  if(check_backward(lattice, coord[0], coord[1], i))
+  {
+    (*f_adj)[bb_indexes[i]] = -(*f_post)[i]  +
+                          2 * weights[i] * rho_w *
+                          (1 + 4.5 * (coeff[i][0] * ux_wall + coeff[i][1] * uy_wall) * (coeff[i][0] * ux_wall + coeff[i][1] * uy_wall) -
+                          3.5 * (ux_wall * ux_wall + uy_wall * uy_wall));// The output of ux_out is fine ux is positive exitig the domain
+  }
+  else
+  {
+    (*f_adj)[bb_indexes[i]] = (*f_post)[i];
+  }
 }
 
-// void
-// Node::apply_NEBB(const Lattice &lattice, unsigned int i)
-// {
-//   // Non-Equilibrium Bounce-Back - Zou-He Bounce-Back
-//   unsigned int x_forward = coord[0] + coeff[i][0];
-//   unsigned int y_forward = coord[1] + coeff[i][1];
-//   double ux_wall = lattice.get_node(x_forward, y_forward).get_ux();
-//   double uy_wall = lattice.get_node(x_forward, y_forward).get_uy();
-  
-//   double rho_w = 0.;
+bool
+Node::check_backward(const Lattice &lattice, unsigned int x,unsigned int y, unsigned int i)
+{
+  unsigned int x_backward = coord[0] + coeff[bb_indexes[i]][0];
+  unsigned int y_backward = coord[1] + coeff[bb_indexes[i]][1];
 
-//   (*f_adj)[bb_indexes[i]] = (*f_post)[i] - 
-//                             6 * weights[i] * rho_w * (coeff[i][0] * ux_wall + coeff[i][1] * uy_wall);
-                  
-// }
+  NodeType type = lattice.get_node(x_backward, y_backward).get_node_type();
+
+  if(type == NodeType::fluid || type == NodeType::boundary)
+    return true;
+  else
+    return false;
+}
 
 void
 Node::update_f()
