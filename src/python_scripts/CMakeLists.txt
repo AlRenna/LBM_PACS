@@ -6,8 +6,8 @@ file(GLOB PYTHON_SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/*.py")
 # Specify the destination directory in the build folder
 set(PYTHON_SCRIPTS_DESTINATION "${CMAKE_BINARY_DIR}/src/python_scripts")
 
-# Copy Python scripts to the build directory
-file(COPY ${PYTHON_SCRIPTS} DESTINATION ${PYTHON_SCRIPTS_DESTINATION})
-
-# Add a custom target to ensure the scripts are copied during the build process
-add_custom_target(copy_python_scripts ALL DEPENDS ${PYTHON_SCRIPTS})
+# Create symbolic links for Python scripts in the build directory
+foreach(PYTHON_SCRIPT ${PYTHON_SCRIPTS})
+    get_filename_component(SCRIPT_NAME ${PYTHON_SCRIPT} NAME)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${PYTHON_SCRIPT} ${PYTHON_SCRIPTS_DESTINATION}/${SCRIPT_NAME})
+endforeach()

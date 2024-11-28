@@ -3,9 +3,6 @@ import numpy as np
 import csv
 import json 
 
-
-# TODO: calcolare i delta per i nodi di oulet, inlet, wall, obstacle (1, 2, 3)
-
 def read_params():
     # Read the JSON file
     with open('params.json', 'r') as file:

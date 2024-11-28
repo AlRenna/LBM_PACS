@@ -119,7 +119,7 @@ def plot_lift_drag(filename, T_final, max_iter, dt):
     plt.ylabel('Force')
     plt.title('Lift and Drag vs Time')
     plt.legend()
-    # Save the plot //TODO save plot
+    # Save the plot to a file
     plt.savefig(os.path.join(output_folder, 'lift_drag.png'), format='png')
     print(f"Plot saved in {output_file}")
 
