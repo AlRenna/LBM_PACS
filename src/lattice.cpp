@@ -7,7 +7,6 @@
 
 #include "src/lattice.hpp"
 
-
 //TODO: Fare un esempio con ala (ostacolo)
 
 Lattice::Lattice()
@@ -35,9 +34,11 @@ Lattice::Lattice()
   ny = param_json["generated_variables"]["new_ny"];
   dt = param_json["generated_variables"]["dt"];
   max_iter = param_json["generated_variables"]["iterations"];
-  nu = param_json["lattice"]["nu"];
-  save_iter = param_json["time"]["save_iter"];
+  nu = param_json["lattice"]["nu"];  
   T_final = param_json["time"]["T_final"];
+  save_time = param_json["time"]["save_time"];
+
+  save_iter = static_cast<unsigned int>(std::ceil(save_time / dt));
   
   // Cs = 1/sqrt(3) * delta_x / delta_t = dx/dt; 
   // dx = L/n; n = sqrt(nx^2 + ny^2); dt = sqrt(Cs) * dx;
@@ -129,15 +130,15 @@ void
 Lattice::populate_Nodes()
 {
   std::cout << "Populating Nodes" << std::endl;
-  for(unsigned int y = 0; y<ny; ++y){
-    for(unsigned int x = 0; x<nx; ++x){
-      unsigned int index = scalar_index(x, y);
-      nodes[index] = Node(node_types[index], {x, y}, ux_in[index], uy_in[index], rho_in[index]);
-      if(node_types[index] == NodeType::boundary){
-        nodes[index].set_bounce_back_properties(bounce_back_dir[index], bounce_back_delta[index]);
-      }
-      nodes[index].init_equilibrium();
+
+  #pragma omp parallel for
+  for(unsigned int index = 0; index<nx*ny; ++index){
+    std::vector<unsigned int> coord_xy = coord_index(index);
+    nodes[index] = Node(node_types[index], coord_xy, ux_in[index], uy_in[index], rho_in[index]);
+    if(node_types[index] == NodeType::boundary){
+      nodes[index].set_bounce_back_properties(bounce_back_dir[index], bounce_back_delta[index]);
     }
+    nodes[index].init_equilibrium();
   }
 }
 
@@ -145,22 +146,16 @@ void
 Lattice::run()
 {
   std::cout << "Running simulation\n" << std::endl;
-  clock_t start_time = clock(); // Add this line
+  auto start_time = std::chrono::high_resolution_clock::now();
   unsigned int iter = 0;
-  double total_time = 0.0; // Add this line
+  double total_time = 0.0;
 
   // Check if there is an obstacle
   bool obstacle_present = false;
-  for(unsigned int y = 0; y<ny; ++y){
-    for(unsigned int x = 0; x<nx; ++x){
-      unsigned int index = scalar_index(x, y);
-      if(node_types[index] == NodeType::obstacle){
-        obstacle_present = true;
-        std::cout << "Obstacle present\n" << std::endl;
-        break;
-      }
-    }
-    if(obstacle_present){
+  for(unsigned int index = 0; index<nx*ny; ++index){
+    if(node_types[index] == NodeType::obstacle){
+      obstacle_present = true;
+      std::cout << "Obstacle present\n" << std::endl;
       break;
     }
   }
@@ -172,6 +167,14 @@ Lattice::run()
   }
   else{
     std::filesystem::create_directory("output_results");
+  }
+
+  if (std::filesystem::exists("output_animations")) {
+    std::filesystem::remove_all("output_animations");
+    std::filesystem::create_directory("output_animations");
+  }
+  else{
+    std::filesystem::create_directory("output_animations");
   }
   
   std::string u_filename = "output_results/velocity_out.txt";
@@ -193,68 +196,64 @@ Lattice::run()
   
   while(iter <= max_iter)
   {
-    clock_t iter_start_time = clock();
-
-    std::cout << "Iteration: " << iter << std::endl;
-    std::cout << "Time: " << iter*dt << std::endl;
-    std::cout << "Collision and streaming" << std::endl;
-    for(unsigned int y = 0; y<ny; ++y)
-    {
-      for(unsigned int x = 0; x<nx; ++x)
-      {
-        unsigned int index = scalar_index(x, y);
-        if(node_types[index] == NodeType::fluid || node_types[index] == NodeType::boundary)
-        {
-          nodes[index].collide(*this);
-          // if(node_types[index] == NodeType::boundary)
-          // {
-          //   nodes[index].apply_BB(*this);
-          // }
-          // (parallel computation) here we do not need to wait since collide and stream work on different members of the node
-          nodes[index].stream(*this);
-        }
-      }
-    }
-
-    // TODO: (parallel computation) check when to wait
-    std::cout << "Physical quantities evaluation\n" << std::endl;
-    for(unsigned int y = 0; y<ny; ++y)
-    {
-      for(unsigned int x = 0; x<nx; ++x)
-      {
-        unsigned int index = scalar_index(x, y);
-        if(node_types[index] == NodeType::fluid || node_types[index] == NodeType::boundary)
-        {
-          if(node_types[index] == NodeType::boundary){
-            nodes[index].apply_BCs(*this);
-            if(obstacle_present)
-            {  
-              nodes[index].compute_drag_and_lift(*this);
-              lift_out[iter] += nodes[index].get_lift();
-              drag_out[iter] += nodes[index].get_drag();  
-            }
-          }
-          nodes[index].update_f();
-
-          nodes[index].compute_physical_quantities();
-
-          ux_out[index] = nodes[index].get_ux();
-          uy_out[index] = nodes[index].get_uy();
-          rho_out[index] = nodes[index].get_rho();
-                  
-        }
-      }
-    }
+    auto iter_start_time = std::chrono::high_resolution_clock::now();
 
     if( iter%save_iter == 0 || iter == max_iter-1)
     {
-      std::cout << "Writing results\n" << std::endl;
+      std::cout << "Iteration: " << iter << std::endl;
+      std::cout << "Time: " << iter * dt << std::endl;
+      std::cout << "Collision and streaming" << std::endl;
+    }
+
+    #pragma omp parallel for 
+    for(unsigned int index = 0; index<nx*ny; ++index){
+      if(node_types[index] == NodeType::fluid || node_types[index] == NodeType::boundary)
+      {
+        nodes[index].collide(*this);
+        nodes[index].stream(*this);
+      }
+    }
+
+    if( iter%save_iter == 0 || iter == max_iter-1) 
+      std::cout << "Physical quantities evaluation\n" << std::endl;
+
+    double lift = 0.0;
+    double drag = 0.0;
+    #pragma omp parallel for default(none) \
+            reduction(+:lift) reduction(+:drag) shared(obstacle_present)
+    for(unsigned int index = 0; index<nx*ny; ++index){
+      if(node_types[index] == NodeType::fluid || node_types[index] == NodeType::boundary)
+      {
+        if(node_types[index] == NodeType::boundary){
+          nodes[index].apply_BCs(*this);
+          if(obstacle_present)
+          { 
+            nodes[index].compute_drag_and_lift(*this);
+            lift = lift + nodes[index].get_lift();
+            drag = drag + nodes[index].get_drag();  
+          }
+        }
+        nodes[index].update_f();
+
+        nodes[index].compute_physical_quantities();
+
+        ux_out[index] = nodes[index].get_ux();
+        uy_out[index] = nodes[index].get_uy();
+        rho_out[index] = nodes[index].get_rho();
+                
+      }
+    }
+    lift_out[iter] = lift;
+    drag_out[iter] = drag;
+
+    if( iter%save_iter == 0 || iter == max_iter-1)
+    {
       writeResults(u_file, ux_file, uy_file, rho_file);
     }
+    
     iter = iter + 1;
-
-    clock_t iter_end_time = clock();
-    total_time += double(iter_end_time - iter_start_time) / CLOCKS_PER_SEC;
+    auto iter_end_time = std::chrono::high_resolution_clock::now();
+    total_time += std::chrono::duration<double>(iter_end_time - iter_start_time).count();
   }
 
   // Save the lift and drag results
@@ -277,8 +276,8 @@ Lattice::run()
   }
 
 
-  clock_t end_time = clock();
-  double elapsed_time = double(end_time - start_time) / CLOCKS_PER_SEC;
+  auto end_time = std::chrono::high_resolution_clock::now();
+  double elapsed_time = std::chrono::duration<double>(end_time - start_time).count();
   double mean_time_per_iter = total_time / max_iter;
   std::cout << "Simulation completed in " << elapsed_time << " seconds." << std::endl;
   std::cout << "Mean time per iteration: " << mean_time_per_iter << " seconds.\n" << std::endl;
@@ -293,14 +292,11 @@ Lattice::run()
 void 
 Lattice::writeResults(std::ofstream &file_u, std::ofstream &file_ux, std::ofstream &file_uy, std::ofstream &file_rho) {
   // Save ux_out
-  for(unsigned int y = 0; y<ny; ++y) {
-    for (unsigned int x = 0; x<nx; ++x) {
-      unsigned int index = scalar_index(x, y);
-      file_u << std::sqrt(ux_out[index] * ux_out[index] + uy_out[index] * uy_out[index]) << " ";
-      file_ux<< ux_out[index] << " ";
-      file_uy<< uy_out[index] << " ";
-      file_rho << rho_out[index] << " ";
-    }
+  for(unsigned int index = 0; index<nx*ny; ++index){
+    file_u << std::sqrt(ux_out[index] * ux_out[index] + uy_out[index] * uy_out[index]) << " ";
+    file_ux<< ux_out[index] << " ";
+    file_uy<< uy_out[index] << " ";
+    file_rho << rho_out[index] << " ";
   }
   file_u << "\n";
   file_ux << "\n";

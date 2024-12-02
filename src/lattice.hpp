@@ -10,6 +10,8 @@
 
 #include "src/node.hpp"
 #include <nlohmann/json.hpp>
+#include <omp.h>
+#include <chrono>
 
 #include <filesystem>
 #include <fstream>
@@ -99,6 +101,17 @@ class Lattice
     inline size_t scalar_index(unsigned int x, unsigned int y) const
       {
         return nx*y+x;
+      }
+
+    /**
+     * @brief Function to compute the 2D coordinates from the scalar index.
+     * 
+     * @param index 
+     * @return std::pair<unsigned int, unsigned int> 
+     */
+    inline std::vector<unsigned int> coord_index(size_t index) const
+      {
+        return {static_cast<unsigned int>(index % nx), static_cast<unsigned int>(index / nx)};
       }
 
     ///@}
@@ -200,8 +213,12 @@ class Lattice
     /// Final time
     double T_final = 1.;
 
+    /// Save time
+    double save_time = 0.1;
+
     /// Save iteration (# of iterations after which the results are saved)
     unsigned int save_iter = 1;
+
     
     /// Maximum number of time steps
     unsigned int max_iter;
