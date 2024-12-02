@@ -7,8 +7,8 @@
         "nu": 0.1
     },
     "time": {
-        "save_iter": 10,
-        "T_final": 1.0
+        "T_final": 1.0,
+        "save_time": 0.5
     },
     "test_info": {
         "u_lid": 0.1,

@@ -86,13 +86,12 @@ def read_params():
     image_path = params['image_path']
     num_points_x = params["generated_variables"]['new_nx']
     num_points_y = params["generated_variables"]['new_ny']
-    dt = params["generated_variables"]['dt']
-    save_iter = params["time"]['save_iter']
+    save_time = params["time"]['save_time']
     T_final = params["time"]['T_final']
+    dt = params["generated_variables"]['dt']
     max_iter = params["generated_variables"]['iterations']
-    dt = dt * save_iter
-    
-    return num_points_x, num_points_y, dt, T_final, max_iter
+
+    return num_points_x, num_points_y, save_time, dt, T_final, max_iter
 
 def plot_lift_drag(filename, T_final, max_iter, dt):
     output_folder = "output_animations"
@@ -123,21 +122,21 @@ def plot_lift_drag(filename, T_final, max_iter, dt):
     plt.savefig(os.path.join(output_folder, 'lift_drag.png'), format='png')
     print(f"Plot saved in {output_file}")
 
-def main(directory, nx, ny, dt, T_final, max_iter):
+def main(directory, nx, ny, save_time, dt, T_final, max_iter):
     lattice_map = read_lattice_map('lattice.csv', nx, ny)
     velocity = read_file_to_array(os.path.join(directory, 'velocity_out.txt'), nx, ny)
     rho = read_file_to_array(os.path.join(directory, 'rho_out.txt'), nx, ny)
     u_array = read_file_to_array(os.path.join(directory, 'ux_out.txt'), nx, ny)
     v_array = read_file_to_array(os.path.join(directory, 'uy_out.txt'), nx, ny)
 
-    animate_velocity_field(velocity, u_array, v_array, dt, 'Vectorial Animation', lattice_map)
-    animate_array(velocity, dt, 'Velocity Animation', lattice_map)
-    animate_array(rho, dt, 'Rho Animation', lattice_map)
+    #animate_velocity_field(velocity, u_array, v_array, dt, 'Vectorial Animation', lattice_map)
+    animate_array(velocity, save_time, 'Velocity Animation', lattice_map)
+    animate_array(rho, save_time, 'Rho Animation', lattice_map)
     plot_lift_drag(os.path.join(directory, 'lift_&_drag.txt'), T_final, max_iter, dt)
 
 
 if __name__ == "__main__":
     directory = "output_results" # input("Enter the directory containing the CSV files: ")
-    nx, ny, dt, T_final, max_iter = read_params() 
+    nx, ny, save_time, dt, T_final, max_iter = read_params() 
     # print(nx, ny, dt)
-    main(directory, nx, ny, dt, T_final, max_iter)
+    main(directory, nx, ny, save_time, dt, T_final, max_iter)
