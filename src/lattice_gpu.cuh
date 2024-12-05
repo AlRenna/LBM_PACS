@@ -9,8 +9,10 @@
 #define __LATTICE_GPU_CUH__
 
 #include <iostream>
-// #include <cuda_runtime.h>
-// #include <cuda.h>
+#include <cuda_runtime.h>
+#include <cuda.h>
+// #include "../../../../../usr/local/cuda-12.6/include/cuda_runtime.h"
+// #include "../../../../../usr/local/cuda-12.6/include/cuda.h"
 
 namespace lbm_gpu
 {

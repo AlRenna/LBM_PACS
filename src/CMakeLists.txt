@@ -21,11 +21,12 @@ if (CUDAToolkit_FOUND)
   set(CMAKE_CUDA_COMPILER "${CUDAToolkit_ROOT}/bin/nvcc")
   enable_language(CUDA)
   set(CMAKE_CUDA_ARCHITECTURES 80)
-  include_directories(${CUDA_INCLUDE_DIRS})
+  include_directories(${CUDAToolkit_INCLUDE_DIRS} /usr/include/x86_64-linux-gnu)
+  message(STATUS "CUDA dirs ${CUDAToolkit_INCLUDE_DIRS}")
   file(GLOB_RECURSE CUDA_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cu" "${CMAKE_CURRENT_SOURCE_DIR}/*.cuh")
   add_library(LBMCudaLib ${CUDA_SOURCES})
-  target_link_libraries(LBMCudaLib PUBLIC ${CUDAToolkit_LIBRARIES} OpenMP::OpenMP_CXX)
-  
+  # message(STATUS "CUDA toolkit libraris ${CUDA_LIBRARIES}")
+  target_link_libraries(LBMCudaLib PUBLIC ${CUDAToolkit_LIBRARIES} OpenMP::OpenMP_CXX rt)
   set_target_properties(LBMCudaLib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
   target_compile_definitions(LBMCudaLib PRIVATE -DUSE_CUDA)
 endif()
@@ -46,6 +47,7 @@ add_library(LatticeLib ${SOURCES})
 
 if (CUDAToolkit_FOUND)
   target_link_libraries(LatticeLib PUBLIC LBMCudaLib)
+  target_compile_definitions(LatticeLib PUBLIC -DUSE_CUDA)
 endif()
 
 # Link nlohmann-json and OpenMP

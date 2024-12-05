@@ -7,14 +7,15 @@
 
 #include "lattice_gpu.cuh"
 
-// __global__ void kernel()
-// {
-//   printf("Hello from block %d, thread %d\n", blockIdx.x, threadIdx.x);
-// }
+__global__ void hello(void)
+{
+  printf("Hello from block %d, thread %d\n", blockIdx.x, threadIdx.x);
+}
 
 void
 lbm_gpu::cuda_simulation()
 {
   std::cout << "Hello from CUDA!" << std::endl;
-  // kernel<<<1, 1>>>();
+  hello <<<1, 1>>> ();
+  cudaDeviceSynchronize(); // Ensure kernel execution is completed
 }
