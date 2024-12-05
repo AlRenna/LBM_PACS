@@ -143,26 +143,27 @@ Lattice::populate_Nodes()
 }
 
 void
-Lattice::run(char **argv)
+Lattice::run(int argc, char **argv)
 {
-  bool gpuFlag = true;
-  // if (std::string(argv[1]) == "-gpu") {
-  //   gpuFlag = true;
-  // }
+  bool gpuFlag = false;
+  if (argc > 1 && std::string(argv[1]) == "-gpu") {
+    gpuFlag = true;
+  }
 
   #ifdef USE_CUDA
     if (gpuFlag)
-    {
+    { 
+        std::cout << "CUDA enabled. Running on GPU" << std::endl;
         run_gpu();
     }
     else
-    {
+    {   
+        std::cout << "CUDA enabled. Running on CPU" << std::endl;
         run_cpu();
     }
-  #endif
-
-  #ifndef USE_CUDA
-      run_cpu();
+  #else
+    std::cout << "CUDA not enabled. Running on CPU" << std::endl;
+    //run_cpu();
   #endif
 }
 

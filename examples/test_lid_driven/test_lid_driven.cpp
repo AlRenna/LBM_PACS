@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     lattice.load_ICs_and_BCs(ux_in, uy_in, rho_in, "lattice.csv");
 
     // Run the simulation
-    lattice.run();
+    lattice.run(argv);
 
     // Path to the python script to postprocess the results and create the animation
     script_path = "../../src/python_scripts/animation.py";

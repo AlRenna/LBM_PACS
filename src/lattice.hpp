@@ -73,7 +73,7 @@ class Lattice
      * 
      * @param argv if the first argument is "-gpu" the simulation is run on the GPU, otherwise on the CPU.
      */
-    void run(char **argv);
+    void run(int argc, char **argv);
 
     /**
      * @brief Run the simulation (with OpenMP parallelization)

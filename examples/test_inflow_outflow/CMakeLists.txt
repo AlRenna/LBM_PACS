@@ -9,5 +9,9 @@ add_executable(test_inflow_outflow ${TEST_INFLOW_OUTFLOW_SOURCES})
 # Link the executable with the main library
 target_link_libraries(test_inflow_outflow LatticeLib)
 
+if (CUDAToolkit_FOUND)
+  target_link_libraries(test_inflow_outflow LBMCudaLib)
+endif()
+
 # Copy params.json to the build directory
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/params.json DESTINATION ${CMAKE_BINARY_DIR}/examples/test_inflow_outflow)
