@@ -143,7 +143,31 @@ Lattice::populate_Nodes()
 }
 
 void
-Lattice::run()
+Lattice::run(char **argv)
+{
+  bool gpuFlag = true;
+  // if (std::string(argv[1]) == "-gpu") {
+  //   gpuFlag = true;
+  // }
+
+  #ifdef USE_CUDA
+    if (gpuFlag)
+    {
+        run_gpu();
+    }
+    else
+    {
+        run_cpu();
+    }
+  #endif
+
+  #ifndef USE_CUDA
+      run_cpu();
+  #endif
+}
+
+void
+Lattice::run_cpu()
 {
   std::cout << "Running simulation\n" << std::endl;
   auto start_time = std::chrono::high_resolution_clock::now();
@@ -288,6 +312,16 @@ Lattice::run()
   rho_file.close();
   
 }
+
+
+#ifdef USE_CUDA
+#include "src/lattice_gpu.cuh"
+void
+Lattice::run_gpu()
+{
+  lbm_gpu::cuda_simulation();
+}
+#endif
 
 void 
 Lattice::writeResults(std::ofstream &file_u, std::ofstream &file_ux, std::ofstream &file_uy, std::ofstream &file_rho) {

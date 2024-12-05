@@ -23,14 +23,6 @@
 #include <string>
 #include <memory>
 
-/*
-Nella main function vogliamo richiamare uno script python che data un immagine in input
-segmentata, ci restituisca:
-- il vettore di NodeTypes
-- le direzioni di boundary nodes
-- 
-*/
-
 
 /**
  * @brief Class to model the lattice for the resolution of the LB method. 
@@ -77,9 +69,23 @@ class Lattice
     void populate_Nodes();
 
     /**
-     * @brief Run the simulation by iterating over time and over the lattice nodes
+     * @brief Call the run (with parallelization on CPU or GPU) function to start the simulation.
+     * 
+     * @param argv if the first argument is "-gpu" the simulation is run on the GPU, otherwise on the CPU.
      */
-    void run();
+    void run(char **argv);
+
+    /**
+     * @brief Run the simulation (with OpenMP parallelization)
+     *  
+     */
+    void run_cpu();
+
+    /**
+     * @brief Run the simulation on the GPU (with CUDA parallelization)
+     * 
+     */
+    void run_gpu();
 
     /**
      * @brief Function to write the results of the simulation to a file .
