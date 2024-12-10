@@ -1,7 +1,13 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
+
+set(CMAKE_CXX_STANDARD 17)
+
+# add_compile_options(-Wall -Wextra)
+
+# add_compile_options(-Wno-dev -Wno-deprecated-declarations)
 
 # Project name
-project(LatticeBoltzmann_PACS)
+project(LatticeBoltzmann_PACS LANGUAGES CXX)
 
 # Function to add all subdirectories.
 function(add_all_subdirectories)
@@ -27,4 +33,3 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/images/)
 
 # Add python_scripts subdirectory
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/python_scripts)
-

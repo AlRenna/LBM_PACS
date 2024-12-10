@@ -7,10 +7,14 @@ file(GLOB_RECURSE TEST_INFLOW_OUTFLOW_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
 add_executable(test_inflow_outflow ${TEST_INFLOW_OUTFLOW_SOURCES})
 
 # Link the executable with the main library
-target_link_libraries(test_inflow_outflow LatticeLib)
+target_link_libraries(test_inflow_outflow PRIVATE LatticeLib)
 
-if (CUDAToolkit_FOUND)
-  target_link_libraries(test_inflow_outflow LBMCudaLib)
+find_package(CUDA)
+
+if (CUDA_FOUND)
+  target_link_libraries(test_inflow_outflow PRIVATE LBMCudaLib)
+  target_compile_definitions(test_inflow_outflow PRIVATE -DUSE_CUDA)
+  message(STATUS "setting USE_CUDA")
 endif()
 
 # Copy params.json to the build directory
