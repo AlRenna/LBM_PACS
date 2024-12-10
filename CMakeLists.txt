@@ -4,10 +4,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 # add_compile_options(-Wall -Wextra)
 
-# add_compile_options(-Wno-dev -Wno-deprecated-declarations)
-
 # Project name
-project(LatticeBoltzmann_PACS LANGUAGES CXX)
+project(LatticeBoltzmann_PACS LANGUAGES CXX CUDA)
 
 # Function to add all subdirectories.
 function(add_all_subdirectories)
@@ -18,9 +16,6 @@ function(add_all_subdirectories)
         endif()
     endforeach()
 endfunction()
-
-# Generate documentation.
-# add_subdirectory(${CMAKE_SOURCE_DIR}/doc/)
 
 # Generate source code.
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/)
