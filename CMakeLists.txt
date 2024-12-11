@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 # add_compile_options(-Wall -Wextra)
 
 # Project name
-project(LatticeBoltzmann_PACS LANGUAGES CXX CUDA)
+project(LatticeBoltzmann_PACS LANGUAGES CXX) # CUDA)
 
 # Function to add all subdirectories.
 function(add_all_subdirectories)
