@@ -39,6 +39,18 @@ void writeResults(std::ofstream &file_u, std::ofstream &file_ux, std::ofstream &
                   const std::vector<double>& ux_out, const std::vector<double>& uy_out, const std::vector<double>& rho_out, 
                   unsigned int nx, unsigned int ny);
 
+
+/**
+ * @brief Function to convert a double array to a std::vector<double>.
+ * 
+ * @param array Pointer to the double array
+ * @param size Size of the array
+ * @return std::vector<double> 
+ */
+inline std::vector<double> arrayToVector(const double* array, std::size_t size) {
+    return std::vector<double>(array, array + size);
+}
+
 /// @}
 
 /// @name Operators
