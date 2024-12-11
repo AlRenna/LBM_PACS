@@ -6,6 +6,25 @@
  */
 
 #include "src/utils/utils.hpp"
+#include <cmath>
+
+void 
+writeResults(std::ofstream &file_u, std::ofstream &file_ux, std::ofstream &file_uy, std::ofstream &file_rho, 
+             const std::vector<double>& ux_out, const std::vector<double>& uy_out, const std::vector<double>& rho_out, 
+             unsigned int nx, unsigned int ny) {
+  // Save ux_out
+  for(unsigned int index = 0; index < nx * ny; ++index){
+    file_u << std::sqrt(ux_out[index] * ux_out[index] + uy_out[index] * uy_out[index]) << " ";
+    file_ux << ux_out[index] << " ";
+    file_uy << uy_out[index] << " ";
+    file_rho << rho_out[index] << " ";
+  }
+  file_u << "\n";
+  file_ux << "\n";
+  file_uy << "\n";
+  file_rho << "\n";
+}
+
 
 std::vector<double> 
 lid_driven(double val, unsigned int nx, unsigned int ny, const std::string& filename_nodes)
@@ -90,3 +109,4 @@ uniform_left_inlet(double val, unsigned int nx, unsigned int ny, const std::stri
     file.close();
     return ux_in;
 }
+

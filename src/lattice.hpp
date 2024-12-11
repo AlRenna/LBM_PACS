@@ -9,6 +9,8 @@
 #define __LATTICE_HPP__
 
 #include "src/node.hpp"
+#include "src/utils/utils.hpp"
+
 #include <nlohmann/json.hpp>
 #include <omp.h>
 #include <chrono>
@@ -86,13 +88,6 @@ class Lattice
      * 
      */
     void run_gpu();
-
-    /**
-     * @brief Function to write the results of the simulation to a file .
-     * 
-     * @param 
-     */
-    void writeResults(std::ofstream &file_u, std::ofstream &file_ux, std::ofstream &file_uy, std::ofstream &file_rho);
 
     /// @name Utility functions
     /// @{

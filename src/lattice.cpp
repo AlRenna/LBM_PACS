@@ -7,6 +7,7 @@
 
 #include "src/lattice.hpp"
 
+
 //TODO: Fare un esempio con ala (ostacolo)
 
 Lattice::Lattice()
@@ -162,8 +163,8 @@ Lattice::run(int argc, char **argv)
         run_cpu();
     }
   #else
-    std::cout << "CUDA not enabled. Running on CPU" << std::endl;
-    //run_cpu();
+    std::cout << "Running on CPU" << std::endl;
+    run_cpu();
   #endif
 }
 
@@ -214,7 +215,7 @@ Lattice::run_cpu()
   
 
   // Save the initial conditions
-  writeResults(u_file, ux_file, uy_file, rho_file);
+  writeResults(u_file, ux_file, uy_file, rho_file, ux_out, uy_out, rho_out, nx, ny);
   //writeResults(iter);
 
   iter = iter + 1;
@@ -273,7 +274,7 @@ Lattice::run_cpu()
 
     if( iter%save_iter == 0 || iter == max_iter-1)
     {
-      writeResults(u_file, ux_file, uy_file, rho_file);
+      writeResults(u_file, ux_file, uy_file, rho_file, ux_out, uy_out, rho_out, nx, ny);
     }
     
     iter = iter + 1;
@@ -314,28 +315,11 @@ Lattice::run_cpu()
   
 }
 
-
 #ifdef USE_CUDA
 #include "src/lattice_gpu.cuh"
 void
 Lattice::run_gpu()
 {
-  lbm_gpu::cuda_simulation();
+  lbm_gpu::cuda_simulation(nx, ny, nodes, tau, dt, save_iter, max_iter);
 }
 #endif
-
-void 
-Lattice::writeResults(std::ofstream &file_u, std::ofstream &file_ux, std::ofstream &file_uy, std::ofstream &file_rho) {
-  // Save ux_out
-  for(unsigned int index = 0; index<nx*ny; ++index){
-    file_u << std::sqrt(ux_out[index] * ux_out[index] + uy_out[index] * uy_out[index]) << " ";
-    file_ux<< ux_out[index] << " ";
-    file_uy<< uy_out[index] << " ";
-    file_rho << rho_out[index] << " ";
-  }
-  file_u << "\n";
-  file_ux << "\n";
-  file_uy << "\n";
-  file_rho << "\n";
-  
-}

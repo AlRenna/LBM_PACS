@@ -16,7 +16,33 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <cmath>
 
+
+/// @name Utility functions
+/// @{
+
+/**
+ * @brief Function to write the results of the simulation to a file.
+ * 
+ * @param file_u Output file for velocity magnitude
+ * @param file_ux Output file for x-component of velocity
+ * @param file_uy Output file for y-component of velocity
+ * @param file_rho Output file for density
+ * @param ux_out Vector containing x-component of velocity
+ * @param uy_out Vector containing y-component of velocity
+ * @param rho_out Vector containing density
+ * @param nx Number of nodes in x-direction
+ * @param ny Number of nodes in y-direction
+ */
+void writeResults(std::ofstream &file_u, std::ofstream &file_ux, std::ofstream &file_uy, std::ofstream &file_rho, 
+                  const std::vector<double>& ux_out, const std::vector<double>& uy_out, const std::vector<double>& rho_out, 
+                  unsigned int nx, unsigned int ny);
+
+/// @}
+
+/// @name Operators
+/// @{
 
 /**
  * @brief Operator to multiply a scalar by a vector.
@@ -44,6 +70,11 @@ inline std::vector<double> operator*(const std::vector<double>& vec, double scal
     return scalar * vec;
 }
 
+/// @}
+
+/// @name Tests utilities functions
+/// @{
+
 /**
  * @brief Function to generate the initial velocity field for the lid driven cavity.
  * 
@@ -54,9 +85,17 @@ inline std::vector<double> operator*(const std::vector<double>& vec, double scal
  */
 std::vector<double> lid_driven(double val, unsigned int nx, unsigned int ny, const std::string& filename_nodes);
 
+/**
+ * @brief Function to generate the initial velocity field for the uniform left inlet case.
+ * 
+ * @param val u_in value
+ * @param nx 
+ * @param ny 
+ * @param filename_nodes 
+ */
 std::vector<double> uniform_left_inlet(double val, unsigned int nx, unsigned int ny, const std::string& filename_nodes);
 
-
+/// @}
 
 
 #endif // __UTILS_HPP__
