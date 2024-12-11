@@ -140,7 +140,7 @@ class Node
     void compute_drag_and_lift(const Lattice &lattice);
 
     /// @name Getters
-    /// @{ 
+    /// @{
 
     /// Get the orizontal velocity component
     inline double get_ux() const { return ux; }
@@ -155,6 +155,19 @@ class Node
     /// Get the NodeType
     inline NodeType get_node_type() const { return node_type; }
 
+    /// Get distribution functions pre-collision
+    inline const std::vector<double>& get_f_pre() const { return *f_pre; }
+    /// Get distribution functions post-collision
+    inline const std::vector<double>& get_f_post() const { return *f_post; }
+    /// Get adjacent distribution functions 
+    inline const std::vector<double>& get_f_adj() const { return *f_adj; }
+    /// Get the bounce_back_dir vector
+    inline const std::vector<bool>& get_bounce_back_dir() const { return bounce_back_dir; }
+    /// Get the bounce_back_delta vector
+    inline const std::vector<double>& get_bounce_back_delta() const { return bounce_back_delta; }
+    
+    /// Get the 2D coordinates of the node
+    inline const std::vector<unsigned int>& get_coord() const { return coord; }
     /// @}
 
     /// @name Setters
