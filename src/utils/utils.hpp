@@ -45,10 +45,52 @@ void writeResults(std::ofstream &file_u, std::ofstream &file_ux, std::ofstream &
  * 
  * @param array Pointer to the double array
  * @param size Size of the array
- * @return std::vector<double> 
  */
 inline std::vector<double> arrayToVector(const double* array, std::size_t size) {
     return std::vector<double>(array, array + size);
+}
+
+/**
+ * @brief Function to convert a std::vector<double> to a double array.
+ * 
+ * @param vec The input vector
+ */
+inline double* vectorToArray(const std::vector<double>& vec) {
+    double* array = new double[vec.size()];
+    std::copy(vec.begin(), vec.end(), array);
+    return array;
+}
+
+/**
+ * @brief Function to convert a std::vector<int> to an int array.
+ * 
+ * @param vec The input vector
+ */
+inline int* vectorToArray(const std::vector<int>& vec) {
+    int* array = new int[vec.size()];
+    std::copy(vec.begin(), vec.end(), array);
+    return array;
+}
+
+/**
+ * @brief Function to convert a std::vector<std::vector<double>> to a double array.
+ * 
+ * @param vec The input 2D vector
+ */
+inline double* vector2DToArray(const std::vector<std::vector<double>>& vec) {
+    std::size_t total_size = 0;
+    for (const auto& inner_vec : vec) {
+        total_size += inner_vec.size();
+    }
+    
+    double* array = new double[total_size];
+    std::size_t index = 0;
+    for (const auto& inner_vec : vec) {
+        std::copy(inner_vec.begin(), inner_vec.end(), array + index);
+        index += inner_vec.size();
+    }
+    
+    return array;
 }
 
 /// @}
