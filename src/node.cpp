@@ -249,7 +249,7 @@ Node::apply_anti_BB(const Lattice &lattice, unsigned int i)
 
     ux_wall = (ux + ux_fluid)/2.;
     uy_wall = (ux + uy_fluid)/2.;
-    rho_w =  0.8 * (2 * ((*f_post)[1] + (*f_post)[5] + (*f_post)[8]) + (*f_post)[0] + (*f_post)[2] + (*f_post)[4])/ (1 - ux_wall);
+    rho_w =  0.8 * (2. * ((*f_post)[1] + (*f_post)[5] + (*f_post)[8]) + (*f_post)[0] + (*f_post)[2] + (*f_post)[4])/ (1. - ux_wall);
   }
   
   if(check_backward(lattice, coord[0], coord[1], i))
