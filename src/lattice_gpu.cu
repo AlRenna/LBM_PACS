@@ -16,8 +16,8 @@
   do { \
     cudaError_t err = call; \
     if (err != cudaSuccess) { \
-      fprintf(stderr, "CUDA error in file '%s' in line %i: %s.\n", \
-              __FILE__, __LINE__, cudaGetErrorString(err)); \
+      std::cerr << "CUDA error in " << __FILE__ << " at line " << __LINE__ << ": " \
+                << cudaGetErrorString(err) << std::endl; \
       exit(EXIT_FAILURE); \
     } \
   } while (0)
@@ -265,7 +265,6 @@ lbm_gpu::cuda_simulation(unsigned int nx,
 {
 
   const int n = nx * ny;
-  // Initialize obstacle_present
   bool obstacle_present = false;
 
   // Constants for CUDA kernel
@@ -391,6 +390,12 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   CUDA_CHECK(cudaFreeHost(host_bounce_back_dir));
   CUDA_CHECK(cudaFreeHost(host_node_types));
 
+  // Initialize device memory for drag and lift
+  double initial_drag = 0.0;
+  double initial_lift = 0.0;
+  CUDA_CHECK(cudaMemcpy(d_drag, &initial_drag, sizeof(double), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_lift, &initial_lift, sizeof(double), cudaMemcpyHostToDevice));
+
   // Run simulation
   std::cout << "Running simulation\n" << std::endl;
   auto start_time = std::chrono::high_resolution_clock::now();
@@ -433,6 +438,9 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   writeResults(u_file, ux_file, uy_file, rho_file, vec_ux, vec_uy, vec_rho, nx, ny);
 
   iter = iter + 1;
+
+  double lift_array[max_iter] {0.};
+  double drag_array[max_iter] {0.};
 
   std::cout << "Start simulation loop\n" << std::endl;
   while(iter <= max_iter) {
@@ -477,14 +485,14 @@ lbm_gpu::cuda_simulation(unsigned int nx,
     {  
       CUDA_CHECK(cudaMemcpy(host_lift, d_lift, sizeof(double), cudaMemcpyDeviceToHost));
       CUDA_CHECK(cudaMemcpy(host_drag, d_drag, sizeof(double), cudaMemcpyDeviceToHost));
-
-      lift_out[iter] = *host_lift;
-      drag_out[iter] = *host_drag;
+      
+      lift_array[iter] = *host_lift;
+      drag_array[iter] = *host_drag;
     }
 
     if(iter % save_iter == 0 || iter == max_iter - 1) {
       // Copy results from device to host
-      CUDA_CHECK(cudaMemcpy(host_ux, d_ux, n * sizeof(double), cudaMemcpyDeviceToHost));
+      CUDA_CHECK(cudaMemcpy(host_ux, d_ux, n * sizeof(double), cudaMemcpyDeviceToHost)); //TODO: Check if this is correct
       CUDA_CHECK(cudaMemcpy(host_uy, d_uy, n * sizeof(double), cudaMemcpyDeviceToHost));
       CUDA_CHECK(cudaMemcpy(host_rho, d_rho, n * sizeof(double), cudaMemcpyDeviceToHost));
 
@@ -503,6 +511,8 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   // Save the lift and drag results
   if(obstacle_present)
   { 
+    lift_out = arrayToVector(lift_array, max_iter);
+    drag_out = arrayToVector(drag_array, max_iter);
     std::string lift_drag_filename = "output_results/lift_&_drag.txt";
     std::ofstream lift_drag_file(lift_drag_filename);
     lift_drag_file << "Lift:\n";
@@ -518,6 +528,9 @@ lbm_gpu::cuda_simulation(unsigned int nx,
     }
     lift_drag_file.close();
   }
+
+  // delete[] lift_array;
+  // delete[] drag_array;
 
   auto end_time = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed_time = end_time - start_time;
@@ -537,20 +550,4 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   CUDA_CHECK(cudaFreeHost(host_drag));
   CUDA_CHECK(cudaFreeHost(host_lift));
   
-  // Free device memory
-  CUDA_CHECK(cudaFree(d_f_pre));
-  CUDA_CHECK(cudaFree(d_f_post));
-  CUDA_CHECK(cudaFree(d_f_adj));
-  CUDA_CHECK(cudaFree(d_ux));
-  CUDA_CHECK(cudaFree(d_uy));
-  CUDA_CHECK(cudaFree(d_rho));
-  CUDA_CHECK(cudaFree(d_drag));
-  CUDA_CHECK(cudaFree(d_lift));
-  CUDA_CHECK(cudaFree(d_coord));
-  CUDA_CHECK(cudaFree(d_bounce_back_delta));
-  CUDA_CHECK(cudaFree(d_bounce_back_dir));
-  CUDA_CHECK(cudaFree(d_node_types));
-  CUDA_CHECK(cudaFree(d_weights));
-  CUDA_CHECK(cudaFree(d_coeff));
-  CUDA_CHECK(cudaFree(d_bb_indexes));
 }
