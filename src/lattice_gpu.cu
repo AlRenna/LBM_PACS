@@ -12,6 +12,17 @@
 //   printf("Hello from block %d, thread %d\n", blockIdx.x, threadIdx.x);
 // }
 
+#define CUDA_CHECK(call) \
+  do { \
+    cudaError_t err = call; \
+    if (err != cudaSuccess) { \
+      fprintf(stderr, "CUDA error in file '%s' in line %i: %s.\n", \
+              __FILE__, __LINE__, cudaGetErrorString(err)); \
+      exit(EXIT_FAILURE); \
+    } \
+  } while (0)
+
+
 __device__ double compute_equilibrium(const double *d_weights, const double *d_coeff,
                                       double rho, double ux, double uy, int i)
 {
@@ -128,7 +139,6 @@ __global__ void collide_and_stream_kernel(
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   int n = nx * ny;
-
   if(index < n) 
   {
     if(d_node_types[index] == NodeType::fluid || d_node_types[index] == NodeType::boundary) 
@@ -157,12 +167,12 @@ __global__ void apply_BCs_and_compute_quantities_kernel(
   const int dir, const double *d_weights, const double *d_coeff, const int *d_bb_indexes,
   double *d_f_pre, double *d_f_post, double *d_f_adj,
   double *d_ux, double *d_uy, double *d_rho,
-  double *d_drag, double *d_lift, bool * d_obstacle,
+  double *d_drag, double *d_lift, bool obstacle_present,
   NodeType *d_node_types, bool * d_bounce_back_dir, double * d_bounce_back_delta, int nx, int ny) 
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   int n = nx * ny;
-
+  // printf("index: %d\n", index);
   if(index < n)
   {
     if(d_node_types[index] == NodeType::fluid || d_node_types[index] == NodeType::boundary)
@@ -197,7 +207,7 @@ __global__ void apply_BCs_and_compute_quantities_kernel(
         }
 
         // Compute drag and lift
-        if(*d_obstacle)
+        if(obstacle_present)
         {
           double dr = 0.0;
           double lf = 0.0;
@@ -253,7 +263,10 @@ lbm_gpu::cuda_simulation(unsigned int nx,
                         unsigned int save_iter,
                         unsigned int max_iter)
 {
+
   const int n = nx * ny;
+  // Initialize obstacle_present
+  bool obstacle_present = false;
 
   // Constants for CUDA kernel
   const int dir = Node::dir;
@@ -265,13 +278,13 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   double *d_weights, *d_coeff;
   int *d_bb_indexes;
 
-  cudaMalloc((void **) &d_weights, dir * sizeof(double));
-  cudaMalloc((void **) &d_coeff, 2 * dir * sizeof(double));
-  cudaMalloc((void **) &d_bb_indexes, dir * sizeof(int));
+  CUDA_CHECK(cudaMalloc((void **) &d_weights, dir * sizeof(double)));
+  CUDA_CHECK(cudaMalloc((void **) &d_coeff, 2 * dir * sizeof(double)));
+  CUDA_CHECK(cudaMalloc((void **) &d_bb_indexes, dir * sizeof(int)));
 
-  cudaMemcpy(d_weights, weights, dir * sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_coeff, coeff, 2 * dir * sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_bb_indexes, bb_indexes, dir * sizeof(int), cudaMemcpyHostToDevice);
+  CUDA_CHECK(cudaMemcpy(d_weights, weights, dir * sizeof(double), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_coeff, coeff, 2 * dir * sizeof(double), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_bb_indexes, bb_indexes, dir * sizeof(int), cudaMemcpyHostToDevice));
 
 
   std::vector<double> lift_out(max_iter, 0.0);
@@ -280,47 +293,42 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   // Host variables
   double * host_f_pre, * host_f_post, * host_f_adj, * host_ux, * host_uy, * host_rho, * host_drag, * host_lift, * host_bounce_back_delta;
   int * host_coord;
-  bool * host_bounce_back_dir, * host_obstacle;
+  bool * host_bounce_back_dir;
   NodeType * host_node_types;
 
   // Device variables
   double * d_f_pre, * d_f_post, * d_f_adj, * d_ux, * d_uy, * d_rho, * d_drag, * d_lift, * d_bounce_back_delta;
   int * d_coord;
-  bool * d_bounce_back_dir, * d_obstacle;
+  bool * d_bounce_back_dir;
   NodeType * d_node_types;
 
   // Allocate memory on the host
-  cudaMallocHost((void **) &host_f_pre, n * dir * sizeof(double));
-  cudaMallocHost((void **) &host_f_post, n * dir * sizeof(double));
-  cudaMallocHost((void **) &host_f_adj, n * dir * sizeof(double));
-  cudaMallocHost((void **) &host_ux, n * sizeof(double));
-  cudaMallocHost((void **) &host_uy, n * sizeof(double));
-  cudaMallocHost((void **) &host_rho, n * sizeof(double));
-  cudaMallocHost((void **) &host_drag, sizeof(double));
-  cudaMallocHost((void **) &host_lift, sizeof(double));
-  cudaMallocHost((void **) &host_coord, n * 2 * sizeof(int));
-  cudaMallocHost((void **) &host_bounce_back_delta, n * dir * sizeof(double));
-  cudaMallocHost((void **) &host_bounce_back_dir, n * dir * sizeof(bool));
-  cudaMallocHost((void **) &host_obstacle, sizeof(bool));
-  cudaMallocHost((void **) &host_node_types, n * sizeof(NodeType));
-
-  // Initialize host_obstacle
-  *host_obstacle = false;
+  CUDA_CHECK(cudaMallocHost((void **) &host_f_pre, n * dir * sizeof(double)));
+  CUDA_CHECK(cudaMallocHost((void **) &host_f_post, n * dir * sizeof(double)));
+  CUDA_CHECK(cudaMallocHost((void **) &host_f_adj, n * dir * sizeof(double)));
+  CUDA_CHECK(cudaMallocHost((void **) &host_ux, n * sizeof(double)));
+  CUDA_CHECK(cudaMallocHost((void **) &host_uy, n * sizeof(double)));
+  CUDA_CHECK(cudaMallocHost((void **) &host_rho, n * sizeof(double)));
+  CUDA_CHECK(cudaMallocHost((void **) &host_drag, sizeof(double)));
+  CUDA_CHECK(cudaMallocHost((void **) &host_lift, sizeof(double)));
+  CUDA_CHECK(cudaMallocHost((void **) &host_coord, n * 2 * sizeof(int)));
+  CUDA_CHECK(cudaMallocHost((void **) &host_bounce_back_delta, n * dir * sizeof(double)));
+  CUDA_CHECK(cudaMallocHost((void **) &host_bounce_back_dir, n * dir * sizeof(bool)));
+  CUDA_CHECK(cudaMallocHost((void **) &host_node_types, n * sizeof(NodeType)));
 
   // Allocate memory on the device
-  cudaMalloc((void **) &d_f_pre, n * dir * sizeof(double));
-  cudaMalloc((void **) &d_f_post, n * dir * sizeof(double));
-  cudaMalloc((void **) &d_f_adj, n * dir * sizeof(double));
-  cudaMalloc((void **) &d_ux, n * sizeof(double));
-  cudaMalloc((void **) &d_uy, n * sizeof(double));
-  cudaMalloc((void **) &d_rho, n * sizeof(double));
-  cudaMalloc((void **) &d_drag, sizeof(double));
-  cudaMalloc((void **) &d_lift, sizeof(double));
-  cudaMalloc((void **) &d_coord, n * 2 * sizeof(int));
-  cudaMalloc((void **) &d_bounce_back_delta, n * dir * sizeof(double));
-  cudaMalloc((void **) &d_bounce_back_dir, n * dir * sizeof(bool));
-  cudaMalloc((void **) &d_obstacle, sizeof(bool));
-  cudaMalloc((void **) &d_node_types, n * sizeof(NodeType));
+  CUDA_CHECK(cudaMalloc((void **) &d_f_pre, n * dir * sizeof(double)));
+  CUDA_CHECK(cudaMalloc((void **) &d_f_post, n * dir * sizeof(double)));
+  CUDA_CHECK(cudaMalloc((void **) &d_f_adj, n * dir * sizeof(double)));
+  CUDA_CHECK(cudaMalloc((void **) &d_ux, n * sizeof(double)));
+  CUDA_CHECK(cudaMalloc((void **) &d_uy, n * sizeof(double)));
+  CUDA_CHECK(cudaMalloc((void **) &d_rho, n * sizeof(double)));
+  CUDA_CHECK(cudaMalloc((void **) &d_drag, sizeof(double)));
+  CUDA_CHECK(cudaMalloc((void **) &d_lift, sizeof(double)));
+  CUDA_CHECK(cudaMalloc((void **) &d_coord, n * 2 * sizeof(int)));
+  CUDA_CHECK(cudaMalloc((void **) &d_bounce_back_delta, n * dir * sizeof(double)));
+  CUDA_CHECK(cudaMalloc((void **) &d_bounce_back_dir, n * dir * sizeof(bool)));
+  CUDA_CHECK(cudaMalloc((void **) &d_node_types, n * sizeof(NodeType)));
 
   // Set host data
   for(unsigned int index = 0; index < n; index++)
@@ -336,8 +344,9 @@ lbm_gpu::cuda_simulation(unsigned int nx,
     host_rho[index] = nodes[index].get_rho();
     host_node_types[index] = nodes[index].get_node_type();
     
-    if(host_node_types[index] == NodeType::obstacle && !(*host_obstacle)) {
-      *host_obstacle = true;
+    if(host_node_types[index] == NodeType::obstacle && !obstacle_present) {
+      std::cout << "Obstacle present\n" << std::endl;
+      obstacle_present = true;
     }
 
     for(unsigned int i = 0; i < dir; i++)
@@ -360,30 +369,27 @@ lbm_gpu::cuda_simulation(unsigned int nx,
 
   std::cout << "Copying data to device\n" << std::endl;
   // Copy data from host to device
-  cudaMemcpy(d_f_pre, host_f_pre, n * dir * sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_f_post, host_f_post, n * dir * sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_f_adj, host_f_adj, n * dir * sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_ux, host_ux, n * sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_uy, host_uy, n * sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_rho, host_rho, n * sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_drag, host_drag, sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_lift, host_lift, sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_coord, host_coord, n * 2 * sizeof(int), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_bounce_back_delta, host_bounce_back_delta, n * dir * sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_bounce_back_dir, host_bounce_back_dir, n * dir * sizeof(bool), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_obstacle, host_obstacle, sizeof(bool), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_node_types, host_node_types, n * sizeof(NodeType), cudaMemcpyHostToDevice);
+  CUDA_CHECK(cudaMemcpy(d_f_pre, host_f_pre, n * dir * sizeof(double), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_f_post, host_f_post, n * dir * sizeof(double), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_f_adj, host_f_adj, n * dir * sizeof(double), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_ux, host_ux, n * sizeof(double), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_uy, host_uy, n * sizeof(double), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_rho, host_rho, n * sizeof(double), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_drag, host_drag, sizeof(double), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_lift, host_lift, sizeof(double), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_coord, host_coord, n * 2 * sizeof(int), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_bounce_back_delta, host_bounce_back_delta, n * dir * sizeof(double), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_bounce_back_dir, host_bounce_back_dir, n * dir * sizeof(bool), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_node_types, host_node_types, n * sizeof(NodeType), cudaMemcpyHostToDevice));
 
   // Free host memory
-  cudaFreeHost(host_f_pre);
-  cudaFreeHost(host_f_post);
-  cudaFreeHost(host_f_adj);
-  cudaFreeHost(host_coord);
-  cudaFreeHost(host_bounce_back_delta);
-  cudaFreeHost(host_bounce_back_dir);
-  cudaFreeHost(host_obstacle);
-  cudaFreeHost(host_node_types);
-
+  CUDA_CHECK(cudaFreeHost(host_f_pre));
+  CUDA_CHECK(cudaFreeHost(host_f_post));
+  CUDA_CHECK(cudaFreeHost(host_f_adj));
+  CUDA_CHECK(cudaFreeHost(host_coord));
+  CUDA_CHECK(cudaFreeHost(host_bounce_back_delta));
+  CUDA_CHECK(cudaFreeHost(host_bounce_back_dir));
+  CUDA_CHECK(cudaFreeHost(host_node_types));
 
   // Run simulation
   std::cout << "Running simulation\n" << std::endl;
@@ -432,11 +438,11 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   while(iter <= max_iter) {
     auto iter_start_time = std::chrono::high_resolution_clock::now();
 
-    // if(iter % save_iter == 0 || iter == max_iter - 1) {
+    if(iter % save_iter == 0 || iter == max_iter - 1) {
       std::cout << "Iteration: " << iter << std::endl;
       std::cout << "Time: " << iter * dt << std::endl;
       std::cout << "Collision and streaming" << std::endl;
-    // }
+    }
 
     // Define block size
     int blockSize = 256; // 256 or 512
@@ -449,30 +455,38 @@ lbm_gpu::cuda_simulation(unsigned int nx,
                                                       d_f_pre, d_f_post, d_f_adj,
                                                       d_ux, d_uy, d_rho, 
                                                       d_node_types, d_bounce_back_dir, nx, ny, tau);
-
-    // if(iter % save_iter == 0 || iter == max_iter - 1) {
+    
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
+    if(iter % save_iter == 0 || iter == max_iter - 1) {
       std::cout << "Physical quantities evaluation\n" << std::endl;
-    // }
+    }
 
     // Launch CUDA kernel for applying boundary conditions and computing physical quantities
     apply_BCs_and_compute_quantities_kernel<<<gridSize, blockSize>>>(dir, d_weights, d_coeff, d_bb_indexes, 
                                                                     d_f_pre, d_f_post, d_f_adj,
                                                                     d_ux, d_uy, d_rho,
-                                                                    d_drag, d_lift, d_obstacle,
+                                                                    d_drag, d_lift, obstacle_present,
                                                                     d_node_types, d_bounce_back_dir, d_bounce_back_delta, nx, ny);
 
-    // Copy lift and drag results from device to host
-    cudaMemcpy(&host_lift, d_lift, sizeof(double), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&host_drag, d_drag, sizeof(double), cudaMemcpyDeviceToHost);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
 
-    lift_out[iter] = *host_lift;
-    drag_out[iter] = *host_drag;
+    // Copy lift and drag results from device to host
+    if(obstacle_present)
+    {  
+      CUDA_CHECK(cudaMemcpy(host_lift, d_lift, sizeof(double), cudaMemcpyDeviceToHost));
+      CUDA_CHECK(cudaMemcpy(host_drag, d_drag, sizeof(double), cudaMemcpyDeviceToHost));
+
+      lift_out[iter] = *host_lift;
+      drag_out[iter] = *host_drag;
+    }
 
     if(iter % save_iter == 0 || iter == max_iter - 1) {
       // Copy results from device to host
-      cudaMemcpy(host_ux, d_ux, n * sizeof(double), cudaMemcpyDeviceToHost);
-      cudaMemcpy(host_uy, d_uy, n * sizeof(double), cudaMemcpyDeviceToHost);
-      cudaMemcpy(host_rho, d_rho, n * sizeof(double), cudaMemcpyDeviceToHost);
+      CUDA_CHECK(cudaMemcpy(host_ux, d_ux, n * sizeof(double), cudaMemcpyDeviceToHost));
+      CUDA_CHECK(cudaMemcpy(host_uy, d_uy, n * sizeof(double), cudaMemcpyDeviceToHost));
+      CUDA_CHECK(cudaMemcpy(host_rho, d_rho, n * sizeof(double), cudaMemcpyDeviceToHost));
 
       vec_ux = arrayToVector(host_ux, nx * ny);
       vec_uy = arrayToVector(host_uy, nx * ny);
@@ -487,7 +501,7 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   }
 
   // Save the lift and drag results
-  if(host_obstacle)
+  if(obstacle_present)
   { 
     std::string lift_drag_filename = "output_results/lift_&_drag.txt";
     std::ofstream lift_drag_file(lift_drag_filename);
@@ -516,10 +530,27 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   uy_file.close();
   rho_file.close();
 
+  // Free host memory
+  CUDA_CHECK(cudaFreeHost(host_ux));
+  CUDA_CHECK(cudaFreeHost(host_uy));
+  CUDA_CHECK(cudaFreeHost(host_rho));
+  CUDA_CHECK(cudaFreeHost(host_drag));
+  CUDA_CHECK(cudaFreeHost(host_lift));
+  
   // Free device memory
-  cudaFreeHost(host_ux);
-  cudaFreeHost(host_uy);
-  cudaFreeHost(host_rho);
-  cudaFreeHost(host_drag);
-  cudaFreeHost(host_lift);
+  CUDA_CHECK(cudaFree(d_f_pre));
+  CUDA_CHECK(cudaFree(d_f_post));
+  CUDA_CHECK(cudaFree(d_f_adj));
+  CUDA_CHECK(cudaFree(d_ux));
+  CUDA_CHECK(cudaFree(d_uy));
+  CUDA_CHECK(cudaFree(d_rho));
+  CUDA_CHECK(cudaFree(d_drag));
+  CUDA_CHECK(cudaFree(d_lift));
+  CUDA_CHECK(cudaFree(d_coord));
+  CUDA_CHECK(cudaFree(d_bounce_back_delta));
+  CUDA_CHECK(cudaFree(d_bounce_back_dir));
+  CUDA_CHECK(cudaFree(d_node_types));
+  CUDA_CHECK(cudaFree(d_weights));
+  CUDA_CHECK(cudaFree(d_coeff));
+  CUDA_CHECK(cudaFree(d_bb_indexes));
 }
