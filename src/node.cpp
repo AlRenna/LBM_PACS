@@ -68,7 +68,7 @@ Node::collide(const Lattice &lattice)
   // f_i(t+dt) = f_i(t) - dt/tau (f_i(t) - f_i^eq(t))
 
   double f_eq = 0.0;
-  for(unsigned int i = 0; i<9; ++i){
+  for(unsigned int i = 0; i<dir; ++i){
     f_eq =  weights[i] * rho * (1. + 3.0 * (coeff[i][0] * ux + coeff[i][1] * uy) + 
             4.5 * (coeff[i][0] * ux + coeff[i][1] * uy) * (coeff[i][0] * ux + coeff[i][1] * uy) - 
             1.5 * (ux * ux + uy * uy));
@@ -290,7 +290,7 @@ Node::compute_physical_quantities()
 {
   // compute rho and U usign the equilibrium distribution
   double rho_ = 0.0;
-  for (unsigned int i = 0; i < 9; ++i)
+  for (unsigned int i = 0; i < dir; ++i)
   {
       rho_ += (*f_pre)[i];
   }
@@ -299,7 +299,7 @@ Node::compute_physical_quantities()
 
   double u = 0.;
   double v = 0.;
-  for (unsigned int i = 0; i < 9; ++i)
+  for (unsigned int i = 0; i < dir; ++i)
   {
       u += rhoinv*coeff[i][0]*(*f_pre)[i];
       v += rhoinv*coeff[i][1]*(*f_pre)[i];
@@ -319,7 +319,7 @@ Node::compute_drag_and_lift(const Lattice &lattice)
   unsigned int x_forward = 0;
   unsigned int y_forward = 0;
 
-  for(unsigned int i = 0; i<9; ++i){
+  for(unsigned int i = 0; i<dir; ++i){
     x_forward = coord[0] + coeff[i][0];
     y_forward = coord[1] + coeff[i][1];
     if(lattice.get_node(x_forward, y_forward).get_node_type() == NodeType::obstacle){
