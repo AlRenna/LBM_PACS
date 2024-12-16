@@ -28,3 +28,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/images/)
 
 # Add python_scripts subdirectory
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/python_scripts)
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -G")
+endif ()
