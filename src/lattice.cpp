@@ -58,8 +58,8 @@ Lattice::Lattice()
   ux_out.resize(nx*ny, 0.);
   uy_out.resize(nx*ny, 0.);
   rho_out.resize(nx*ny, 1.0);
-  lift_out.resize(max_iter, 0.);
-  drag_out.resize(max_iter, 0.);
+  lift_out.resize(max_iter + 1, 0.);
+  drag_out.resize(max_iter + 1, 0.);
 }
 
 void
@@ -255,8 +255,8 @@ Lattice::run_cpu()
           if(obstacle_present)
           { 
             nodes[index].compute_drag_and_lift(*this);
-            lift = lift + nodes[index].get_lift();
-            drag = drag + nodes[index].get_drag();  
+            lift += nodes[index].get_lift();
+            drag += nodes[index].get_drag();  
           }
         }
         nodes[index].update_f();

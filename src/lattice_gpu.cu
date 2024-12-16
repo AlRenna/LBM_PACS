@@ -439,8 +439,8 @@ lbm_gpu::cuda_simulation(unsigned int nx,
 
   iter = iter + 1;
 
-  double lift_array[max_iter] {0.};
-  double drag_array[max_iter] {0.};
+  double lift_array[max_iter + 1] {0.};
+  double drag_array[max_iter + 1] {0.};
 
   std::cout << "Start simulation loop\n" << std::endl;
   while(iter <= max_iter) {
@@ -528,9 +528,6 @@ lbm_gpu::cuda_simulation(unsigned int nx,
     }
     lift_drag_file.close();
   }
-
-  // delete[] lift_array;
-  // delete[] drag_array;
 
   auto end_time = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed_time = end_time - start_time;
