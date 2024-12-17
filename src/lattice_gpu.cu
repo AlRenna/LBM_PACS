@@ -331,6 +331,7 @@ lbm_gpu::cuda_simulation(unsigned int nx,
 
   // Set host data
   //TODO: use openMP?
+  #pragma omp parallel for
   for(unsigned int index = 0; index < n; index++)
   {
     std::vector<double> temp_f_pre = nodes[index].get_f_pre();

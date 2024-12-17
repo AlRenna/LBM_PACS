@@ -9,6 +9,7 @@
 #define __LATTICE_GPU_CUH__
 
 #include "src/node.hpp"
+#include <omp.h>
 
 #include <chrono>
 #include <fstream>
