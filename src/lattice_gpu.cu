@@ -330,6 +330,7 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   CUDA_CHECK(cudaMalloc((void **) &d_node_types, n * sizeof(NodeType)));
 
   // Set host data
+  //TODO: use openMP?
   for(unsigned int index = 0; index < n; index++)
   {
     std::vector<double> temp_f_pre = nodes[index].get_f_pre();
@@ -390,18 +391,12 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   CUDA_CHECK(cudaFreeHost(host_bounce_back_dir));
   CUDA_CHECK(cudaFreeHost(host_node_types));
 
-  // Initialize device memory for drag and lift
-  double initial_drag = 0.0;
-  double initial_lift = 0.0;
-  CUDA_CHECK(cudaMemcpy(d_drag, &initial_drag, sizeof(double), cudaMemcpyHostToDevice));
-  CUDA_CHECK(cudaMemcpy(d_lift, &initial_lift, sizeof(double), cudaMemcpyHostToDevice));
-
   // Run simulation
   std::cout << "Running simulation\n" << std::endl;
   auto start_time = std::chrono::high_resolution_clock::now();
   unsigned int iter = 0;
   double total_time = 0.0;
-  std::cout << "Create folder and files\n" << std::endl;
+  // std::cout << "Create folder and files\n" << std::endl;
   // Delete the output_results directory if it exists
   if (std::filesystem::exists("output_results")) {
     std::filesystem::remove_all("output_results");
@@ -429,7 +424,7 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   std::ofstream uy_file(uy_filename);
   std::ofstream rho_file(rho_filename);
 
-  std::cout << "Save initial conditions\n" << std::endl;
+  // std::cout << "Save initial conditions\n" << std::endl;
   std::vector<double> vec_ux(nx * ny), vec_uy(nx * ny), vec_rho(nx * ny);
   vec_ux = arrayToVector(host_ux, nx * ny);
   vec_uy = arrayToVector(host_uy, nx * ny);
@@ -452,10 +447,10 @@ lbm_gpu::cuda_simulation(unsigned int nx,
       std::cout << "Collision and streaming" << std::endl;
     }
 
-    // Define block size
+    // Define block size (number of threads per block)
     int blockSize = 256; // 256 or 512
 
-    // Calculate grid size
+    // Calculate grid size (number of blocks per grid)
     int gridSize = (nx * ny + blockSize - 1) / blockSize;
 
     // Launch CUDA kernel for collision and streaming
@@ -488,11 +483,16 @@ lbm_gpu::cuda_simulation(unsigned int nx,
       
       lift_array[iter] = *host_lift;
       drag_array[iter] = *host_drag;
+
+      *host_lift = 0.0;
+      *host_drag = 0.0;
+      CUDA_CHECK(cudaMemcpy(d_lift, host_lift, sizeof(double), cudaMemcpyHostToDevice));
+      CUDA_CHECK(cudaMemcpy(d_drag, host_drag, sizeof(double), cudaMemcpyHostToDevice));
     }
 
     if(iter % save_iter == 0 || iter == max_iter - 1) {
       // Copy results from device to host
-      CUDA_CHECK(cudaMemcpy(host_ux, d_ux, n * sizeof(double), cudaMemcpyDeviceToHost)); //TODO: Check if this is correct
+      CUDA_CHECK(cudaMemcpy(host_ux, d_ux, n * sizeof(double), cudaMemcpyDeviceToHost));
       CUDA_CHECK(cudaMemcpy(host_uy, d_uy, n * sizeof(double), cudaMemcpyDeviceToHost));
       CUDA_CHECK(cudaMemcpy(host_rho, d_rho, n * sizeof(double), cudaMemcpyDeviceToHost));
 

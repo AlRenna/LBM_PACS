@@ -324,7 +324,7 @@ Node::compute_drag_and_lift(const Lattice &lattice)
     y_forward = coord[1] + coeff[i][1];
     if(lattice.get_node(x_forward, y_forward).get_node_type() == NodeType::obstacle){
       drag += coeff[i][0] * (*f_pre)[i] - coeff[bb_indexes[i]][0] * (*f_adj)[bb_indexes[i]];
-      lift += coeff[i][1] * (*f_pre)[i] - coeff[bb_indexes[i]][1] * (*f_adj)[bb_indexes[i]];
+      lift += coeff[i][1] * (*f_pre)[i] - coeff[bb_indexes[i]][1] * (*f_adj)[bb_indexes[i]]; //TODO: check sign
     }
   }
 }

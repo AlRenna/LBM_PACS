@@ -41,6 +41,7 @@ class Lattice
      */
     Lattice();
 
+    // TODO: rename function and add description (initialize_lattice)
     /**
      * @brief Function to set the initial and boundary conditions.
      * The function must be called from the main function before running the simulation so 
