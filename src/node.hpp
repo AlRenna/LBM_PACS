@@ -113,6 +113,8 @@ class Node
      * f_bb_i = -f_i(x_b) + 2*w_i*rho_w*(1 + 4.5*(c_i.u_w)^2 - 3.5(u_w^2))
      */
     void apply_anti_BB(const Lattice &lattice, unsigned int i);
+    
+    void test_BC(const Lattice &lattice, unsigned int i);
 
     /**
      * @brief Function to check if the node in the backward direction is a fluid or boundary node.
