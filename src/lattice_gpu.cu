@@ -330,7 +330,6 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   CUDA_CHECK(cudaMalloc((void **) &d_node_types, n * sizeof(NodeType)));
 
   // Set host data
-  //TODO: use openMP?
   #pragma omp parallel for
   for(unsigned int index = 0; index < n; index++)
   {
