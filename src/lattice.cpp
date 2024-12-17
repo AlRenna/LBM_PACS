@@ -63,7 +63,7 @@ Lattice::Lattice()
 }
 
 void
-Lattice::load_ICs_and_BCs(const std::vector<double>& ux_in_, 
+Lattice::initialize(const std::vector<double>& ux_in_, 
                           const std::vector<double>& uy_in_, 
                           const std::vector<double>& rho_in_,
                           const std::string& filename_nodes)
@@ -75,8 +75,6 @@ Lattice::load_ICs_and_BCs(const std::vector<double>& ux_in_,
   uy_out = uy_in;
   rho_out = rho_in;
   readNodesFromCSV(filename_nodes);
-
-  // Find Boundary Nodes types
 
   // Populate the nodes
   populate_Nodes();

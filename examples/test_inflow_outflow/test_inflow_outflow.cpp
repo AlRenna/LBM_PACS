@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     ux_in = uniform_left_inlet(u_in, nx, ny, "lattice.csv");
 
     // Set the initial and boundary conditions
-    lattice.load_ICs_and_BCs(ux_in, uy_in, rho_in, "lattice.csv");
+    lattice.initialize(ux_in, uy_in, rho_in, "lattice.csv");
 
     // Run the simulation
     lattice.run(argc, argv);

@@ -41,9 +41,10 @@ class Lattice
      */
     Lattice();
 
-    // TODO: rename function and add description (initialize_lattice)
     /**
-     * @brief Function to set the initial and boundary conditions.
+     * @brief Function to initialize the lattice.
+     * It sets the input velocity, density, reads the lattice information from a .csv file, 
+     * and populates the lattice nodes.
      * The function must be called from the main function before running the simulation so 
      * that the lattice can be properly initialized.
      * 
@@ -53,7 +54,7 @@ class Lattice
      * @param filename_nodes File containing the information on the nodes of the lattice
      * 
      */
-    void load_ICs_and_BCs(const std::vector<double>& ux_in_, 
+    void initialize(const std::vector<double>& ux_in_, 
                           const std::vector<double>& uy_in_, 
                           const std::vector<double>& rho_in_,
                           const std::string& filename_nodes);
