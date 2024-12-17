@@ -222,7 +222,7 @@ __global__ void apply_BCs_and_compute_quantities_kernel(
               double cy_bb = d_coeff[2 * d_bb_indexes[i] + 1];
 
               dr += cx * d_f_pre[index * dir + i] - cx_bb * d_f_adj[index * dir + d_bb_indexes[i]];
-              lf += cy * d_f_pre[index * dir + i] - cy_bb * d_f_adj[index * dir + d_bb_indexes[i]];
+              lf -= cy * d_f_pre[index * dir + i] - cy_bb * d_f_adj[index * dir + d_bb_indexes[i]];
             }
           }
           atomicAdd(d_drag, dr);
