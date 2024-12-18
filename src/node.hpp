@@ -203,6 +203,12 @@ class Node
                                       std::vector<double> bounce_back_delta_);
 
     /**
+     * @brief Set the zou he type object. Called by set_bounce_back_properties.
+     * 
+     */
+    void set_zou_he_type();
+
+    /**
      * @brief Set the distribution for the adjacent node alorng direction i.
      * 
      * @param i Direction index

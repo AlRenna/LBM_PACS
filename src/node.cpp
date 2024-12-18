@@ -34,7 +34,7 @@ Node::Node(NodeType node_type_, std::vector<unsigned int> coord_,
     ux(ux_),
     uy(uy_),
     rho(rho_),
-    zou_he_type(ZouHeType::none), //TODO: make function to update this value
+    zou_he_type(ZouHeType::none),
 {
   f_pre = std::make_unique<std::vector<double>>(dir, 0.);
   f_post = std::make_unique<std::vector<double>>(dir, 0.);
@@ -394,11 +394,34 @@ Node::compute_drag_and_lift(const Lattice &lattice)
   }
 }
 
-
 void
 Node::set_bounce_back_properties(std::vector<bool> bounce_back_dir_, 
                                   std::vector<double> bounce_back_delta_)
 {
   bounce_back_dir = bounce_back_dir_;
   bounce_back_delta = bounce_back_delta_;
+  set_zou_he_type();
+}
+
+void
+Node::set_zou_he_type()
+{
+  if(bounce_back_dir[5] && bounce_back_dir[1] && bounce_back_dir[8])
+    zou_he_type = ZouHeType::right;
+  else if(bounce_back_dir[6] && bounce_back_dir[2] && bounce_back_dir[5])
+    zou_he_type = ZouHeType::top;
+  else if(bounce_back_dir[7] && bounce_back_dir[3] && bounce_back_dir[6])
+    zou_he_type = ZouHeType::left;
+  else if(bounce_back_dir[8] && bounce_back_dir[4] && bounce_back_dir[7])
+    zou_he_type = ZouHeType::bottom;
+  else if(bounce_back_dir[2] && bounce_back_dir[5] && bounce_back_dir[1])
+    zou_he_type = ZouHeType::top_right;
+  else if(bounce_back_dir[2] && bounce_back_dir[6] && bounce_back_dir[3])
+    zou_he_type = ZouHeType::top_left;
+  else if(bounce_back_dir[4] && bounce_back_dir[7] && bounce_back_dir[3])
+    zou_he_type = ZouHeType::bottom_left;
+  else if(bounce_back_dir[4] && bounce_back_dir[8] && bounce_back_dir[1])
+    zou_he_type = ZouHeType::bottom_right;
+  else
+    zou_he_type = ZouHeType::none;
 }
