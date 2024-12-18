@@ -172,19 +172,6 @@ Node::apply_BB(const Lattice &lattice, unsigned int i)
   unsigned int y_forward = coord[1] + coeff[i][1];
   double ux_wall = lattice.get_node(x_forward, y_forward).get_ux();
   double uy_wall = lattice.get_node(x_forward, y_forward).get_uy();
-  double rho_w = rho;
-
-  NodeType type = lattice.get_node(x_forward, y_forward).get_node_type();
-  if(type == NodeType::outlet){
-    unsigned int x_backward = coord[0] + coeff[bb_indexes[i]][0];
-    unsigned int y_backward = coord[1] + coeff[bb_indexes[i]][1];
-    double ux_fluid = lattice.get_node(x_backward, y_backward).get_ux();
-    double uy_fluid = lattice.get_node(x_backward, y_backward).get_uy();
-
-    ux_wall = (ux + ux_fluid)/2.;
-    uy_wall = (ux + uy_fluid)/2.;
-    rho_w =  (2 * ((*f_post)[1] + (*f_post)[5] + (*f_post)[8]) + (*f_post)[0] + (*f_post)[2] + (*f_post)[4])/ (1 - ux_wall);
-  }
   
   // check if the node in the backward direction is a fluid or boundary node
   if(!bounce_back_dir[bb_indexes[i]])
@@ -204,6 +191,7 @@ Node::apply_ZouHe(const Lattice &lattice)
   double u_wall = 0.0;
   int x = coord[0];
   int y = coord[1];
+  double rho_wall = 0.0;
 
   switch (zou_he_type)
   {
@@ -211,29 +199,29 @@ Node::apply_ZouHe(const Lattice &lattice)
       // No Zou-He boundary condition
       break;
     case ZouHeType::right:
-      rho = lattice.get_node(x + coeff[1][0], y + coeff[1][1]).get_rho();
-      u_wall = (*f_adj)[0] + (*f_adj)[2] + (*f_adj)[4] + 2.0 * ((*f_adj)[1] + (*f_adj)[5] + (*f_adj)[8]) - 1.0;
+      rho_wall = lattice.get_node(x + coeff[1][0], y + coeff[1][1]).get_rho();
+      u_wall = (*f_adj)[0] + (*f_adj)[2] + (*f_adj)[4] + 2.0 * ((*f_adj)[1] + (*f_adj)[5] + (*f_adj)[8]) - rho_wall;
       (*f_adj)[3] = (*f_adj)[1] - 2.0 / 3.0 * u_wall;
       (*f_adj)[6] = (*f_adj)[8] - 0.5 * ((*f_adj)[2] - (*f_adj)[4]) - 1.0 / 6.0 * u_wall;
       (*f_adj)[7] = (*f_adj)[5] + 0.5 * ((*f_adj)[2] - (*f_adj)[4]) - 1.0 / 6.0 * u_wall;
       break;
     case ZouHeType::top:
-      rho = lattice.get_node(x + coeff[2][0], y + coeff[2][1]).get_rho();
-      u_wall = (*f_adj)[0] + (*f_adj)[1] + (*f_adj)[3] + 2.0 * ((*f_adj)[2] + (*f_adj)[5] + (*f_adj)[6]) - 1.0;
+      rho_wall = lattice.get_node(x + coeff[2][0], y + coeff[2][1]).get_rho();
+      u_wall = (*f_adj)[0] + (*f_adj)[1] + (*f_adj)[3] + 2.0 * ((*f_adj)[2] + (*f_adj)[5] + (*f_adj)[6]) - rho_wall;
       (*f_adj)[4] = (*f_adj)[2] - 2.0 / 3.0 * u_wall;
       (*f_adj)[7] = (*f_adj)[5] - 0.5 * ((*f_adj)[3] - (*f_adj)[1]) - 1.0 / 6.0 * u_wall;
       (*f_adj)[8] = (*f_adj)[6] + 0.5 * ((*f_adj)[3] - (*f_adj)[1]) - 1.0 / 6.0 * u_wall;
       break;
     case ZouHeType::left:
-      rho = lattice.get_node(x + coeff[3][0], y + coeff[3][1]).get_rho();
-      u_wall = (*f_adj)[0] + (*f_adj)[2] + (*f_adj)[4] + 2.0 * ((*f_adj)[3] + (*f_adj)[6] + (*f_adj)[7]) - 1.0;
+      rho_wall = lattice.get_node(x + coeff[3][0], y + coeff[3][1]).get_rho();
+      u_wall = (*f_adj)[0] + (*f_adj)[2] + (*f_adj)[4] + 2.0 * ((*f_adj)[3] + (*f_adj)[6] + (*f_adj)[7]) - rho_wall;
       (*f_adj)[1] = (*f_adj)[3] - 2.0 / 3.0 * u_wall;
       (*f_adj)[5] = (*f_adj)[7] - 0.5 * ((*f_adj)[2] - (*f_adj)[4]) - 1.0 / 6.0 * u_wall;
       (*f_adj)[8] = (*f_adj)[6] + 0.5 * ((*f_adj)[2] - (*f_adj)[4]) - 1.0 / 6.0 * u_wall;
       break;
     case ZouHeType::bottom:
-      rho = lattice.get_node(x + coeff[4][0], y + coeff[4][1]).get_rho();
-      u_wall = (*f_adj)[0] + (*f_adj)[1] + (*f_adj)[3] + 2.0 * ((*f_adj)[4] + (*f_adj)[7] + (*f_adj)[8]) - 1.0;
+      rho_wall = lattice.get_node(x + coeff[4][0], y + coeff[4][1]).get_rho();
+      u_wall = (*f_adj)[0] + (*f_adj)[1] + (*f_adj)[3] + 2.0 * ((*f_adj)[4] + (*f_adj)[7] + (*f_adj)[8]) - rho_wall;
       (*f_adj)[2] = (*f_adj)[4] - 2.0 / 3.0 * u_wall;
       (*f_adj)[5] = (*f_adj)[7] - 0.5 * ((*f_adj)[1] - (*f_adj)[3]) - 1.0 / 6.0 * u_wall;
       (*f_adj)[6] = (*f_adj)[8] + 0.5 * ((*f_adj)[1] - (*f_adj)[3]) - 1.0 / 6.0 * u_wall;

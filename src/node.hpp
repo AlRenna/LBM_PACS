@@ -157,6 +157,8 @@ class Node
     inline double get_lift() const { return lift; }
     /// Get the NodeType
     inline NodeType get_node_type() const { return node_type; }
+    /// Get the ZouHeType
+    inline ZouHeType get_zou_he_type() const { return zou_he_type; }
 
     /// Get distribution functions pre-collision
     inline const std::vector<double>& get_f_pre() const { return *f_pre; }
