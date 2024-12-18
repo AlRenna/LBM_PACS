@@ -120,7 +120,7 @@ Node::apply_BCs(const Lattice &lattice)
         // apply_BB(lattice, i);
       }
       else if(type == NodeType::outlet){
-        apply_ZouHe(lattice, i);
+        apply_ZouHe(lattice, i);// TODO: zouhe has to be outside the for loop no need for is
       }
       else{
         throw std::runtime_error("Invalid BCs type");
@@ -243,21 +243,80 @@ Node::apply_anti_BB(const Lattice &lattice, unsigned int i)
   }
 }
 
+//TODO: scrivere una funzione che determini per i nodi boundary la posizione dell'outlet:
+//        - se sono ai corner o ai lati, fai switch e applica il caso specifico di zou-he 
 void 
 Node::apply_ZouHe(const Lattice &lattice, unsigned int i)
 {
-  unsigned int x_forward = coord[0] + coeff[i][0];
-  unsigned int y_forward = coord[1] + coeff[i][1];
-  double ux_wall = 0.0;
+  double u_wall = 0.0;
+  unsigned int x_backward = 0;
+  unsigned int y_backward = 0;
+
+  switch (zou_he_type)
+  {
+    case ZouHeType::none:
+      // No Zou-He boundary condition
+      break;
+    case ZouHeType::right:
+      rho = 1;
+      u_wall = (*f_adj)[0] + (*f_adj)[2] + (*f_adj)[4] + 2.0 * ((*f_adj)[1] + (*f_adj)[5] + (*f_adj)[8]) - 1.0;
+      (*f_adj)[3] = (*f_adj)[1] - 2.0 / 3.0 * ux_wall;
+      (*f_adj)[6] = (*f_adj)[8] - 0.5 * ((*f_adj)[2] - (*f_adj)[4]) - 1.0 / 6.0 * ux_wall;
+      (*f_adj)[7] = (*f_adj)[5] + 0.5 * ((*f_adj)[2] - (*f_adj)[4]) - 1.0 / 6.0 * ux_wall;
+      break;
+    case ZouHeType::top:
+      rho = 1;
+      u_wall = (*f_adj)[0] + (*f_adj)[1] + (*f_adj)[3] + 2.0 * ((*f_adj)[2] + (*f_adj)[5] + (*f_adj)[6]) - 1.0;
+      (*f_adj)[4] = (*f_adj)[2] - 2.0 / 3.0 * u_wall;
+      (*f_adj)[7] = (*f_adj)[5] - 0.5 * ((*f_adj)[3] - (*f_adj)[1]) - 1.0 / 6.0 * ux_wall;
+      (*f_adj)[8] = (*f_adj)[6] + 0.5 * ((*f_adj)[3] - (*f_adj)[1]) - 1.0 / 6.0 * ux_wall;
+      break;
+      break;
+    case ZouHeType::left:
+      rho = 1;
+      u_wall = (*f_adj)[0] + (*f_adj)[2] + (*f_adj)[4] + 2.0 * ((*f_adj)[3] + (*f_adj)[6] + (*f_adj)[7]) - 1.0;
+      (*f_adj)[1] = (*f_adj)[3] - 2.0 / 3.0 * u_wall;
+      (*f_adj)[5] = (*f_adj)[7] - 0.5 * ((*f_adj)[2] - (*f_adj)[4]) - 1.0 / 6.0 * ux_wall;
+      (*f_adj)[8] = (*f_adj)[6] + 0.5 * ((*f_adj)[2] - (*f_adj)[4]) - 1.0 / 6.0 * ux_wall;
+      break;
+      break;
+    case ZouHeType::bottom:
+      rho = 1;
+      u_wall = (*f_adj)[0] + (*f_adj)[1] + (*f_adj)[3] + 2.0 * ((*f_adj)[4] + (*f_adj)[7] + (*f_adj)[8]) - 1.0;
+      (*f_adj)[2] = (*f_adj)[4] - 2.0 / 3.0 * u_wall;
+      (*f_adj)[5] = (*f_adj)[7] - 0.5 * ((*f_adj)[1] - (*f_adj)[3]) - 1.0 / 6.0 * ux_wall;
+      (*f_adj)[6] = (*f_adj)[8] + 0.5 * ((*f_adj)[1] - (*f_adj)[3]) - 1.0 / 6.0 * ux_wall;
+      break;
+    case ZouHeType::top_right:
+        x_backward = coord[0] - 1;
+        y_backward = coord[1] + 1;
+        rho = 1;
+
+        f.at() = f.at() - 2.0 / 3.0 * rho * macroU.at(0);
+        f.at() = f.at() - 2.0 / 3.0 * rho * macroU.at(1);
+        f.at() = f.at() - 1.0 / 6.0 * rho * macroU.at(0) - 1.0 / 6.0 * rho * macroU.at(1);
+        f.at() = 0;
+        f.at() = 0;
+        f.at() = rho - f.at(1) - f.at(2) - f.at(3) - f.at(4) - f.at(5) - f.at(7);
+      break;
+    case ZouHeType::top_left:
+      // Apply Zou-He boundary condition for top-left corner
+      break;
+    case ZouHeType::bottom_left:
+      // Apply Zou-He boundary condition for bottom-left corner
+      break;
+    case ZouHeType::bottom_right:
+      // Apply Zou-He boundary condition for bottom-right corner
+      break;
+    default:
+      throw std::runtime_error("Invalid ZouHeType");
+  }
+
+
 
   if(check_backward(lattice, coord[0], coord[1], i))
   {
 
-    // (*f_adj)[bb_indexes[i]] = weights[i] * rho_w * (1. + 3.0 * (coeff[i][0] * ux_wall + coeff[i][1] * uy_wall) + 
-    //           4.5 * (coeff[i][0] * ux_wall + coeff[i][1] * uy_wall) * (coeff[i][0] * ux_wall + coeff[i][1] * uy_wall) - 
-    //           1.5 * (ux_wall * ux_wall + uy_wall * uy_wall));
-    //TODO: scrivere una funzione che determini per i nodi boundary la posizione dell'outlet:
-    //        - se sono ai corner o ai lati, fai switch e applica il caso specifico di zou-he 
     rho = 1;
     ux_wall = (*f_adj)[0] + (*f_adj)[2] + (*f_adj)[4] + 2.0 * ((*f_adj)[1] + (*f_adj)[5] + (*f_adj)[8]) - 1.0;
     (*f_adj)[3] = (*f_adj)[1] - 2.0 / 3.0 * ux_wall;
