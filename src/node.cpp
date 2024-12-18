@@ -33,7 +33,8 @@ Node::Node(NodeType node_type_, std::vector<unsigned int> coord_,
     coord(coord_),
     ux(ux_),
     uy(uy_),
-    rho(rho_)
+    rho(rho_),
+    zou_he_type(ZouHeType::none), //TODO: make function to update this value
 {
   f_pre = std::make_unique<std::vector<double>>(dir, 0.);
   f_post = std::make_unique<std::vector<double>>(dir, 0.);
@@ -119,7 +120,7 @@ Node::apply_BCs(const Lattice &lattice)
         // apply_BB(lattice, i);
       }
       else if(type == NodeType::outlet){
-        test_BC(lattice, i);
+        apply_ZouHe(lattice, i);
       }
       else{
         throw std::runtime_error("Invalid BCs type");
@@ -234,7 +235,7 @@ Node::apply_anti_BB(const Lattice &lattice, unsigned int i)
     (*f_adj)[bb_indexes[i]] = -(*f_post)[i]  +
                           2 * weights[i] * rho_w *
                           (1 + 4.5 * (coeff[i][0] * ux_wall + coeff[i][1] * uy_wall) * (coeff[i][0] * ux_wall + coeff[i][1] * uy_wall) -
-                          3.5 * (ux_wall * ux_wall + uy_wall * uy_wall)); // The output of ux_out is fine ux is positive exitig the domain
+                          3.5 * (ux_wall * ux_wall + uy_wall * uy_wall)); // The output of ux_out is fine ux is positive exiting the domain
   }
   else
   {
@@ -243,32 +244,25 @@ Node::apply_anti_BB(const Lattice &lattice, unsigned int i)
 }
 
 void 
-Node::test_BC(const Lattice &lattice, unsigned int i)
+Node::apply_ZouHe(const Lattice &lattice, unsigned int i)
 {
   unsigned int x_forward = coord[0] + coeff[i][0];
   unsigned int y_forward = coord[1] + coeff[i][1];
-  double ux_wall = lattice.get_node(x_forward, y_forward).get_ux();
-  double uy_wall = lattice.get_node(x_forward, y_forward).get_uy();
-  double rho_w = rho;
+  double ux_wall = 0.0;
 
-  NodeType type = lattice.get_node(x_forward, y_forward).get_node_type();
-  if(type == NodeType::outlet){
-    unsigned int x_backward = coord[0] + coeff[bb_indexes[i]][0];
-    unsigned int y_backward = coord[1] + coeff[bb_indexes[i]][1];
-    double ux_fluid = lattice.get_node(x_backward, y_backward).get_ux();
-    double uy_fluid = lattice.get_node(x_backward, y_backward).get_uy();
-
-    rho_w = lattice.get_node(x_backward, y_backward).get_rho();
-    ux_wall = ux_fluid;
-    uy_wall = uy_fluid;
-  }
-  
   if(check_backward(lattice, coord[0], coord[1], i))
   {
 
     // (*f_adj)[bb_indexes[i]] = weights[i] * rho_w * (1. + 3.0 * (coeff[i][0] * ux_wall + coeff[i][1] * uy_wall) + 
     //           4.5 * (coeff[i][0] * ux_wall + coeff[i][1] * uy_wall) * (coeff[i][0] * ux_wall + coeff[i][1] * uy_wall) - 
     //           1.5 * (ux_wall * ux_wall + uy_wall * uy_wall));
+    //TODO: scrivere una funzione che determini per i nodi boundary la posizione dell'outlet:
+    //        - se sono ai corner o ai lati, fai switch e applica il caso specifico di zou-he 
+    rho = 1;
+    ux_wall = (*f_adj)[0] + (*f_adj)[2] + (*f_adj)[4] + 2.0 * ((*f_adj)[1] + (*f_adj)[5] + (*f_adj)[8]) - 1.0;
+    (*f_adj)[3] = (*f_adj)[1] - 2.0 / 3.0 * ux_wall;
+    (*f_adj)[6] = (*f_adj)[8] - 0.5 * ((*f_adj)[2] - (*f_adj)[4]) - 1.0 / 6.0 * ux_wall;
+    (*f_adj)[7] = (*f_adj)[5] + 0.5 * ((*f_adj)[2] - (*f_adj)[4]) - 1.0 / 6.0 * ux_wall;
   }
   else
   {
@@ -276,6 +270,7 @@ Node::test_BC(const Lattice &lattice, unsigned int i)
   }
 }
 
+//TODO: check if necessary
 bool
 Node::check_backward(const Lattice &lattice, unsigned int x,unsigned int y, unsigned int i)
 {

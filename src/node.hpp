@@ -32,6 +32,23 @@ enum class NodeType
 };
 
 /**
+ * @brief Enumeration class for the ZouHe BCs. Used to handle the different positional boundary conditions.
+ * 
+ */
+enum class ZouHeType
+{
+  none,
+  right,
+  top,
+  left,
+  bottom,
+  top_right,
+  top_left,
+  bottom_left,
+  bottom_right,
+};
+
+/**
  * @brief Node class. Contains the information of the node in the lattice such as: type, position, velocity
  * distribution and physical quantities.
  * 
@@ -114,7 +131,7 @@ class Node
      */
     void apply_anti_BB(const Lattice &lattice, unsigned int i);
     
-    void test_BC(const Lattice &lattice, unsigned int i);
+    void apply_ZouHe(const Lattice &lattice, unsigned int i);
 
     /**
      * @brief Function to check if the node in the backward direction is a fluid or boundary node.
@@ -260,8 +277,9 @@ class Node
 
     /// Node type (fluid, boundary, solid)
     NodeType node_type;
-    // /// Position of the boundary node (if it's a boundary node)
-    // BoundaryNodePosition boundary_node_position;
+
+    /// ZouHeType 
+    ZouHeType zou_he_type;
 
     /// Directions in which the BCs are to be applied around the node (if it's a boundary node or outlet node)
     std::vector<bool> bounce_back_dir;
