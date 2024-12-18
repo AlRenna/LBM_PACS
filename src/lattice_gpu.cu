@@ -45,23 +45,6 @@ __device__ int find_forward_index(int current_index, int nx, int ny, int i, cons
   return y_new * nx + x_new;
 }
 
-__device__ int find_backward_index(int current_index, int nx, int ny, int i, const double *d_coeff, const int *d_bb_indexes)
-{
-  int x = current_index % nx;
-  int y = current_index / nx;
-  double cx = d_coeff[2 * d_bb_indexes[i]];
-  double cy = d_coeff[2 * d_bb_indexes[i] + 1];
-  int x_new = x + cx;
-  int y_new = y + cy;
-  return y_new * nx + x_new;
-}
-
-__device__ bool check_backward(int index, int nx, int ny, int i, const double *d_coeff, const int *d_bb_indexes, NodeType *d_node_types)
-{
-  int backward_index = find_backward_index(index, nx, ny, i, d_coeff, d_bb_indexes);
-  return d_node_types[backward_index] == NodeType::fluid || d_node_types[backward_index] == NodeType::boundary;
-}
-
 __device__ void apply_IBB(const int dir,const double *d_weights, const double *d_coeff, const int *d_bb_indexes, 
                           double *d_f_post, double *d_f_adj,
                           double *d_ux, double *d_uy, double *d_rho,
@@ -72,7 +55,8 @@ __device__ void apply_IBB(const int dir,const double *d_weights, const double *d
   double ux_wall = d_ux[forward_index];
   double uy_wall = d_uy[forward_index];
 
-  if(check_backward(index, nx, ny, i, d_coeff, d_bb_indexes, d_node_types))
+  // check if the node in the backward direction is a fluid or boundary node
+  if(!d_bounce_back_dir[index * dir + d_bb_indexes[i]])
   {
     double cx = d_coeff[2 * i];
     double cy = d_coeff[2 * i + 1];
@@ -92,43 +76,80 @@ __device__ void apply_IBB(const int dir,const double *d_weights, const double *d
   }
 }
 
-__device__ void apply_anti_BB(const int dir,const double *d_weights, const double *d_coeff, const int *d_bb_indexes, 
+__device__ void apply_BB(const int dir,const double *d_weights, const double *d_coeff, const int *d_bb_indexes, 
                           double *d_f_post, double *d_f_adj,
-                          double *d_ux, double *d_uy, double *d_rho,
-                          NodeType *d_node_types, bool * d_bounce_back_dir, double * d_bounce_back_delta,
+                          double *d_ux, double *d_uy, bool * d_bounce_back_dir,
                           int nx, int ny, int i, int index)
 {
   int forward_index = find_forward_index(index, nx, ny, i, d_coeff);
   double ux_wall = d_ux[forward_index];
   double uy_wall = d_uy[forward_index];
-  double rho_wall = d_rho[forward_index];
 
-  if(d_node_types[forward_index] == NodeType::outlet)
-  {
-    int backward_index = find_backward_index(index, nx, ny, i, d_coeff, d_bb_indexes);
-    double ux_fluid = d_ux[backward_index];
-    double uy_fluid = d_uy[backward_index];
-
-    ux_wall = (d_ux[forward_index] + ux_fluid) / 2;
-    uy_wall = (d_uy[forward_index] + uy_fluid) / 2;
-    
-    rho_wall = 0.8 * (2 * (d_f_post[index * dir + 1] + d_f_post[index * dir + 5] + d_f_post[index * dir + 8]) + d_f_post[index * dir + 0] + d_f_post[index * dir + 2] + d_f_post[index * dir + 4]) / (1. - ux_wall);
-  }
-
-  if(check_backward(index, nx, ny, i, d_coeff, d_bb_indexes, d_node_types))
+  // check if the node in the backward direction is a fluid or boundary node
+  if(!d_bounce_back_dir[index * dir + d_bb_indexes[i]])
   {
     double cx = d_coeff[2 * i];
     double cy = d_coeff[2 * i + 1];
 
-    d_f_adj[index * dir + d_bb_indexes[i]] = -d_f_post[index * dir + i] +
-                          2 * d_weights[i] * rho_wall *
-                          (1 + 4.5 * (cx * ux_wall + cy * uy_wall) * (cx * ux_wall + cy * uy_wall) -
-                          3.5 * (ux_wall * ux_wall + uy_wall * uy_wall));
+    d_f_adj[index * dir + d_bb_indexes[i]] = d_f_post[index * dir + i] -
+                    (ux_wall * cx + uy_wall * cy) * d_weights[i] * 6;
   }
   else
   {
     d_f_adj[index * dir + d_bb_indexes[i]] = d_f_post[index * dir + i];
   }
+}
+
+__device__ void apply_ZouHe(const int dir, const double *d_coeff, double *d_f_adj,
+                           double *d_rho, ZouHeType * d_zou_he_types,
+                          int nx, int ny, int index)
+{
+  double u_wall = 0.0;
+  double rho_wall = 0.0;
+  int forward_index = 0;
+
+  switch (d_zou_he_types[index])
+  {
+    case ZouHeType::none:
+      // No Zou-He boundary condition
+      break;
+    case ZouHeType::right:
+      forward_index = find_forward_index(index, nx, ny, 1, d_coeff);
+      rho_wall = d_rho[forward_index];
+      u_wall = d_f_adj[index * dir + 0] + d_f_adj[index * dir + 2] + d_f_adj[index * dir + 4] + 2.0 * (d_f_adj[index * dir + 1] + d_f_adj[index * dir + 5] + d_f_adj[index * dir + 8]) - rho_wall;
+      d_f_adj[index * dir + 3] = d_f_adj[index * dir + 1] - 2.0 / 3.0 * u_wall;
+      d_f_adj[index * dir + 6] = d_f_adj[index * dir + 8] - 0.5 * (d_f_adj[index * dir + 2] - d_f_adj[index * dir + 4]) - 1.0 / 6.0 * u_wall;
+      d_f_adj[index * dir + 7] = d_f_adj[index * dir + 5] + 0.5 * (d_f_adj[index * dir + 2] - d_f_adj[index * dir + 4]) - 1.0 / 6.0 * u_wall;
+      break;
+    case ZouHeType::top:
+      forward_index = find_forward_index(index, nx, ny, 2, d_coeff);
+      rho_wall = d_rho[forward_index];
+      u_wall = d_f_adj[index * dir + 0] + d_f_adj[index * dir + 1] + d_f_adj[index * dir + 3] + 2.0 * (d_f_adj[index * dir + 2] + d_f_adj[index * dir + 5] + d_f_adj[index * dir + 6]) - rho_wall;
+      d_f_adj[index * dir + 4] = d_f_adj[index * dir + 2] - 2.0 / 3.0 * u_wall;
+      d_f_adj[index * dir + 7] = d_f_adj[index * dir + 5] - 0.5 * (d_f_adj[index * dir + 3] - d_f_adj[index * dir + 1]) - 1.0 / 6.0 * u_wall;
+      d_f_adj[index * dir + 8] = d_f_adj[index * dir + 6] + 0.5 * (d_f_adj[index * dir + 3] - d_f_adj[index * dir + 1]) - 1.0 / 6.0 * u_wall;
+      break;
+    case ZouHeType::left:
+      forward_index = find_forward_index(index, nx, ny, 3, d_coeff);
+      rho_wall = d_rho[forward_index];
+      u_wall = d_f_adj[index * dir + 0] + d_f_adj[index * dir + 2] + d_f_adj[index * dir + 4] + 2.0 * (d_f_adj[index * dir + 3] + d_f_adj[index * dir + 6] + d_f_adj[index * dir + 7]) - rho_wall;
+      d_f_adj[index * dir + 1] = d_f_adj[index * dir + 3] - 2.0 / 3.0 * u_wall;
+      d_f_adj[index * dir + 5] = d_f_adj[index * dir + 7] - 0.5 * (d_f_adj[index * dir + 2] - d_f_adj[index * dir + 4]) - 1.0 / 6.0 * u_wall;
+      d_f_adj[index * dir + 8] = d_f_adj[index * dir + 6] + 0.5 * (d_f_adj[index * dir + 2] - d_f_adj[index * dir + 4]) - 1.0 / 6.0 * u_wall;
+      break;
+    case ZouHeType::bottom:
+      forward_index = find_forward_index(index, nx, ny, 4, d_coeff);
+      rho_wall = d_rho[forward_index];
+      u_wall = d_f_adj[index * dir + 0] + d_f_adj[index * dir + 1] + d_f_adj[index * dir + 3] + 2.0 * (d_f_adj[index * dir + 4] + d_f_adj[index * dir + 7] + d_f_adj[index * dir + 8]) - rho_wall;
+      d_f_adj[index * dir + 2] = d_f_adj[index * dir + 4] - 2.0 / 3.0 * u_wall;
+      d_f_adj[index * dir + 5] = d_f_adj[index * dir + 7] - 0.5 * (d_f_adj[index * dir + 1] - d_f_adj[index * dir + 3]) - 1.0 / 6.0 * u_wall;
+      d_f_adj[index * dir + 6] = d_f_adj[index * dir + 8] + 0.5 * (d_f_adj[index * dir + 1] - d_f_adj[index * dir + 3]) - 1.0 / 6.0 * u_wall;
+      break;
+    default:
+      printf("Error: Invalid ZouHeType at index %d\n", index);
+      return;
+  }
+
 }
 
 __global__ void collide_and_stream_kernel(
@@ -168,7 +189,7 @@ __global__ void apply_BCs_and_compute_quantities_kernel(
   double *d_f_pre, double *d_f_post, double *d_f_adj,
   double *d_ux, double *d_uy, double *d_rho,
   double *d_drag, double *d_lift, bool obstacle_present,
-  NodeType *d_node_types, bool * d_bounce_back_dir, double * d_bounce_back_delta, int nx, int ny) 
+  NodeType *d_node_types, ZouHeType * d_zou_he_types, bool * d_bounce_back_dir, double * d_bounce_back_delta, int nx, int ny) 
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   int n = nx * ny;
@@ -195,8 +216,7 @@ __global__ void apply_BCs_and_compute_quantities_kernel(
             }
             else if(d_node_types[index_new] == NodeType::outlet)
             {
-              // Anti Bounce-Back
-              apply_anti_BB(dir, d_weights, d_coeff, d_bb_indexes, d_f_post, d_f_adj, d_ux, d_uy, d_rho, d_node_types, d_bounce_back_dir, d_bounce_back_delta, nx, ny, i, index);
+              continue; // ZouHe is applied after the loop for outlet nodes
             }
             else
             {
@@ -205,6 +225,8 @@ __global__ void apply_BCs_and_compute_quantities_kernel(
             }
           }
         }
+
+        apply_ZouHe(dir, d_coeff,  d_f_adj, d_rho,  d_zou_he_types, nx, ny, index);
 
         // Compute drag and lift
         if(obstacle_present)
@@ -294,12 +316,14 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   int * host_coord;
   bool * host_bounce_back_dir;
   NodeType * host_node_types;
+  ZouHeType * host_zou_he_types;
 
   // Device variables
   double * d_f_pre, * d_f_post, * d_f_adj, * d_ux, * d_uy, * d_rho, * d_drag, * d_lift, * d_bounce_back_delta;
   int * d_coord;
   bool * d_bounce_back_dir;
   NodeType * d_node_types;
+  ZouHeType * d_zou_he_types;
 
   // Allocate memory on the host
   CUDA_CHECK(cudaMallocHost((void **) &host_f_pre, n * dir * sizeof(double)));
@@ -314,6 +338,7 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   CUDA_CHECK(cudaMallocHost((void **) &host_bounce_back_delta, n * dir * sizeof(double)));
   CUDA_CHECK(cudaMallocHost((void **) &host_bounce_back_dir, n * dir * sizeof(bool)));
   CUDA_CHECK(cudaMallocHost((void **) &host_node_types, n * sizeof(NodeType)));
+  CUDA_CHECK(cudaMallocHost((void **) &host_zou_he_types, n * sizeof(ZouHeType)));
 
   // Allocate memory on the device
   CUDA_CHECK(cudaMalloc((void **) &d_f_pre, n * dir * sizeof(double)));
@@ -328,6 +353,7 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   CUDA_CHECK(cudaMalloc((void **) &d_bounce_back_delta, n * dir * sizeof(double)));
   CUDA_CHECK(cudaMalloc((void **) &d_bounce_back_dir, n * dir * sizeof(bool)));
   CUDA_CHECK(cudaMalloc((void **) &d_node_types, n * sizeof(NodeType)));
+  CUDA_CHECK(cudaMalloc((void **) &d_zou_he_types, n * sizeof(ZouHeType)));
 
   // Set host data
   #pragma omp parallel for
@@ -343,6 +369,7 @@ lbm_gpu::cuda_simulation(unsigned int nx,
     host_uy[index] = nodes[index].get_uy();
     host_rho[index] = nodes[index].get_rho();
     host_node_types[index] = nodes[index].get_node_type();
+    host_zou_he_types[index] = nodes[index].get_zou_he_type();
     
     if(host_node_types[index] == NodeType::obstacle && !obstacle_present) {
       std::cout << "Obstacle present\n" << std::endl;
@@ -381,6 +408,7 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   CUDA_CHECK(cudaMemcpy(d_bounce_back_delta, host_bounce_back_delta, n * dir * sizeof(double), cudaMemcpyHostToDevice));
   CUDA_CHECK(cudaMemcpy(d_bounce_back_dir, host_bounce_back_dir, n * dir * sizeof(bool), cudaMemcpyHostToDevice));
   CUDA_CHECK(cudaMemcpy(d_node_types, host_node_types, n * sizeof(NodeType), cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_zou_he_types, host_zou_he_types, n * sizeof(ZouHeType), cudaMemcpyHostToDevice));
 
   // Free host memory
   CUDA_CHECK(cudaFreeHost(host_f_pre));
@@ -390,6 +418,7 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   CUDA_CHECK(cudaFreeHost(host_bounce_back_delta));
   CUDA_CHECK(cudaFreeHost(host_bounce_back_dir));
   CUDA_CHECK(cudaFreeHost(host_node_types));
+  CUDA_CHECK(cudaFreeHost(host_zou_he_types));
 
   // Run simulation
   std::cout << "Running simulation\n" << std::endl;
@@ -470,7 +499,7 @@ lbm_gpu::cuda_simulation(unsigned int nx,
                                                                     d_f_pre, d_f_post, d_f_adj,
                                                                     d_ux, d_uy, d_rho,
                                                                     d_drag, d_lift, obstacle_present,
-                                                                    d_node_types, d_bounce_back_dir, d_bounce_back_delta, nx, ny);
+                                                                    d_node_types, d_zou_he_types, d_bounce_back_dir, d_bounce_back_delta, nx, ny);
 
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
