@@ -41,11 +41,7 @@ enum class ZouHeType
   right,
   top,
   left,
-  bottom,
-  top_right,
-  top_left,
-  bottom_left,
-  bottom_right,
+  bottom
 };
 
 /**
@@ -121,25 +117,13 @@ class Node
      * f_bb_i = f_i(x_b)
      */
     void apply_BB(const Lattice &lattice, unsigned int i);
-
-
-    /**
-     * @brief Apply the Anti Bounce-Back.
-     * Use the post-collision distribution to compute the ABB:
-     * 
-     * f_bb_i = -f_i(x_b) + 2*w_i*rho_w*(1 + 4.5*(c_i.u_w)^2 - 3.5(u_w^2))
-     */
-    void apply_anti_BB(const Lattice &lattice, unsigned int i);
     
-    void apply_ZouHe(const Lattice &lattice, unsigned int i);
-
     /**
-     * @brief Function to check if the node in the backward direction is a fluid or boundary node.
+     * @brief Apply the ZouHe BCs on outlet nodes by imposing a pressure.
      * 
-     * @return true 
-     * @return false 
+     * 
      */
-    bool check_backward(const Lattice &lattice, unsigned int x,unsigned int y, unsigned int i);
+    void apply_ZouHe(const Lattice &lattice);
 
     /**
      * @brief Update the distribution functions. Swap the pre-collision with the adjecient distibution pointer for the next iteration.
@@ -203,10 +187,10 @@ class Node
                                       std::vector<double> bounce_back_delta_);
 
     /**
-     * @brief Set the zou he type object. Called by set_bounce_back_properties.
+     * @brief Set the zou he type object.
      * 
      */
-    void set_zou_he_type();
+    void set_zou_he_type(Lattice &lattice);
 
     /**
      * @brief Set the distribution for the adjacent node alorng direction i.
