@@ -136,9 +136,16 @@ Lattice::populate_Nodes()
     nodes[index] = Node(node_types[index], coord_xy, ux_in[index], uy_in[index], rho_in[index]);
     if(node_types[index] == NodeType::boundary){
       nodes[index].set_bounce_back_properties(bounce_back_dir[index], bounce_back_delta[index]);
-      nodes[index].set_zou_he_type(*this);
     }
     nodes[index].init_equilibrium();
+  }
+
+  // set zou_he_type after creatinng all the nodes
+  #pragma omp parallel for
+  for(unsigned int index = 0; index<nx*ny; ++index){
+    if(node_types[index] == NodeType::boundary){
+      nodes[index].set_zou_he_type(*this);
+    }
   }
 }
 
