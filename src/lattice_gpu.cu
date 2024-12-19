@@ -45,15 +45,15 @@ __device__ int find_forward_index(int current_index, int nx, int ny, int i, cons
   return y_new * nx + x_new;
 }
 
-__device__ void apply_IBB(const int dir,const double *d_weights, const double *d_coeff, const int *d_bb_indexes, 
+__device__ void apply_IBB(const int dir, const double *d_weights, const double *d_coeff, const int *d_bb_indexes, double current_time,
                           double *d_f_post, double *d_f_adj,
                           double *d_ux, double *d_uy, double *d_rho,
                           NodeType *d_node_types, bool * d_bounce_back_dir, double * d_bounce_back_delta,
                           int nx, int ny, int i, int index)
 {
   int forward_index = find_forward_index(index, nx, ny, i, d_coeff);
-  double ux_wall = d_ux[forward_index];
-  double uy_wall = d_uy[forward_index];
+  double ux_wall = d_ux[forward_index] * (1/ (1 + std::exp(-25 *(current_time - 0.2))));
+  double uy_wall = d_uy[forward_index] * (1/ (1 + std::exp(-25 *(current_time - 0.2))));
 
   // check if the node in the backward direction is a fluid or boundary node
   if(!d_bounce_back_dir[index * dir + d_bb_indexes[i]])
@@ -76,14 +76,14 @@ __device__ void apply_IBB(const int dir,const double *d_weights, const double *d
   }
 }
 
-__device__ void apply_BB(const int dir,const double *d_weights, const double *d_coeff, const int *d_bb_indexes, 
+__device__ void apply_BB(const int dir, const double *d_weights, const double *d_coeff, const int *d_bb_indexes, double current_time,
                           double *d_f_post, double *d_f_adj,
                           double *d_ux, double *d_uy, bool * d_bounce_back_dir,
                           int nx, int ny, int i, int index)
 {
   int forward_index = find_forward_index(index, nx, ny, i, d_coeff);
-  double ux_wall = d_ux[forward_index];
-  double uy_wall = d_uy[forward_index];
+  double ux_wall = d_ux[forward_index] * (1/ (1 + std::exp(-25 *(current_time - 0.2))));
+  double uy_wall = d_uy[forward_index] * (1/ (1 + std::exp(-25 *(current_time - 0.2))));
 
   // check if the node in the backward direction is a fluid or boundary node
   if(!d_bounce_back_dir[index * dir + d_bb_indexes[i]])
@@ -185,7 +185,7 @@ __global__ void collide_and_stream_kernel(
 }
 
 __global__ void apply_BCs_and_compute_quantities_kernel(
-  const int dir, const double *d_weights, const double *d_coeff, const int *d_bb_indexes,
+  const int dir, const double *d_weights, const double *d_coeff, const int *d_bb_indexes, double current_time,
   double *d_f_pre, double *d_f_post, double *d_f_adj,
   double *d_ux, double *d_uy, double *d_rho,
   double *d_drag, double *d_lift, bool obstacle_present,
@@ -212,7 +212,7 @@ __global__ void apply_BCs_and_compute_quantities_kernel(
               d_node_types[index_new] == NodeType::inlet)
             {
               // Interpolated Bounce-Back
-              apply_IBB(dir, d_weights, d_coeff, d_bb_indexes, d_f_post, d_f_adj, d_ux, d_uy, d_rho, d_node_types, d_bounce_back_dir, d_bounce_back_delta, nx, ny, i, index);
+              apply_IBB(dir, d_weights, d_coeff, d_bb_indexes, current_time, d_f_post, d_f_adj, d_ux, d_uy, d_rho, d_node_types, d_bounce_back_dir, d_bounce_back_delta, nx, ny, i, index);
             }
             else if(d_node_types[index_new] == NodeType::outlet)
             {
@@ -467,13 +467,18 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   double drag_array[max_iter + 1] {0.};
 
   std::cout << "Start simulation loop\n" << std::endl;
+  double current_time = 0.0;
+
   while(iter <= max_iter) {
     auto iter_start_time = std::chrono::high_resolution_clock::now();
 
+    current_time = static_cast<double>(iter) / max_iter;
+    
     if(iter % save_iter == 0 || iter == max_iter - 1) {
       std::cout << "Iteration: " << iter << std::endl;
       std::cout << "Time: " << iter * dt << std::endl;
       std::cout << "Collision and streaming" << std::endl;
+      std::cout << current_time << std::endl;
     }
 
     // Define block size (number of threads per block)
@@ -483,7 +488,7 @@ lbm_gpu::cuda_simulation(unsigned int nx,
     int gridSize = (nx * ny + blockSize - 1) / blockSize;
 
     // Launch CUDA kernel for collision and streaming
-    collide_and_stream_kernel<<<gridSize, blockSize>>>(dir, d_weights, d_coeff, d_bb_indexes, 
+    collide_and_stream_kernel<<<gridSize, blockSize>>>(dir, d_weights, d_coeff, d_bb_indexes,
                                                       d_f_pre, d_f_post, d_f_adj,
                                                       d_ux, d_uy, d_rho, 
                                                       d_node_types, d_bounce_back_dir, nx, ny, tau);
@@ -495,7 +500,7 @@ lbm_gpu::cuda_simulation(unsigned int nx,
     }
 
     // Launch CUDA kernel for applying boundary conditions and computing physical quantities
-    apply_BCs_and_compute_quantities_kernel<<<gridSize, blockSize>>>(dir, d_weights, d_coeff, d_bb_indexes, 
+    apply_BCs_and_compute_quantities_kernel<<<gridSize, blockSize>>>(dir, d_weights, d_coeff, d_bb_indexes, current_time, 
                                                                     d_f_pre, d_f_post, d_f_adj,
                                                                     d_ux, d_uy, d_rho,
                                                                     d_drag, d_lift, obstacle_present,

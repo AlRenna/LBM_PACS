@@ -11,6 +11,7 @@
 #include "src/node.hpp"
 #include <omp.h>
 
+#include <cmath>
 #include <chrono>
 #include <fstream>
 #include <iostream>

@@ -21,14 +21,15 @@ int main(int argc, char **argv)
     nlohmann::json params;
     params_file >> params;
     params_file.close();
-    double u_lid = params["test_info"]["velocity"];
-    double rho_fluid = params["test_info"]["rho"];
 
     // Path to the python script to preprocess the image and classify the nodes
     std::string script_path = "../../src/python_scripts/lattice_generation_RGB.py";
     std::cout << "Running python script: lattice_generation_RGB.py" << std::endl;
     run_terminal_python(script_path);
-   
+
+    double u_lid = params["generated_variables"]["lattice_velocity"];
+    double rho_fluid = params["generated_variables"]["lattice_rho"];
+
     // Create the lattice
     std::cout << "Creating lattice" << std::endl;
     Lattice lattice;

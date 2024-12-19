@@ -42,11 +42,31 @@ def adapt_nx_ny(image_path, nx, ny):
     params["generated_variables"]['new_nx'] = nx
     params["generated_variables"]['new_ny'] = ny
 
-    # Calculate the time interval
-    length = params["lattice"]['Length']
-    dt  = np.sqrt(3) *  length/ np.sqrt(nx * nx + ny * ny)
-    iterations = int(np.ceil(params["time"]['T_final'] / dt))
-    params["generated_variables"]['dt'] = dt
+    # Conversion in Lattice units
+    length = params["test_info"]['Length']
+    velocity = params["test_info"]["velocity"]
+    nu = params["test_info"]["nu"] 
+    
+    Crho = params["test_info"]["rho"]
+    Cx = length/ np.sqrt(nx * nx + ny * ny)
+    Ct = 0.1 * Cx / velocity #TODO: reduce for stability
+    # Ct = 0.05
+
+    Cnu = Cx * Cx / Ct
+    Cvel = Cx / Ct
+
+    lattice_velocity = velocity / Cvel
+
+    lattice_nu = nu / Cnu
+    lattice_rho = 1.0 # rho / Crho
+    # delta_x = 1, delta_t = 1 lattice units
+
+    params["generated_variables"]['lattice_velocity'] = lattice_velocity
+    params["generated_variables"]['lattice_nu'] = lattice_nu
+    params["generated_variables"]['lattice_rho'] = lattice_rho
+
+    iterations = int(np.ceil(params["time"]['T_final'] / Ct))
+    params["generated_variables"]['dt'] = Ct
     params["generated_variables"]['iterations'] = iterations
     
     # Write the updated JSON file

@@ -133,6 +133,9 @@ class Lattice
 
     /// Get the time_step
     inline double get_dt() const { return dt; }
+
+    /// Get simulate time
+    inline double get_time() const { return static_cast<double>(iter) / max_iter; }
     
     /**
      * @brief Get the (const) node object given the 2D coordinates.
@@ -199,8 +202,6 @@ class Lattice
     /// @name Physical parameters
     /// @{
 
-    /// Characteristic Length 
-    double Length;
     /// Viscosity
     double nu; //= 1.0/6.0; 
     // Relaxation time
@@ -222,6 +223,8 @@ class Lattice
     /// Save iteration (# of iterations after which the results are saved)
     unsigned int save_iter = 1;
 
+    /// iter
+    unsigned int iter;
     
     /// Maximum number of time steps
     unsigned int max_iter;

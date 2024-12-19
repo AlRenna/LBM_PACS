@@ -140,8 +140,9 @@ Node::apply_IBB(const Lattice &lattice, unsigned int i)
   // take the velocity at the wall node
   unsigned int x_forward = coord[0] + coeff[i][0];
   unsigned int y_forward = coord[1] + coeff[i][1];
-  double ux_wall = lattice.get_node(x_forward, y_forward).get_ux();
-  double uy_wall = lattice.get_node(x_forward, y_forward).get_uy();
+  double current_time = lattice.get_time();
+  double ux_wall = lattice.get_node(x_forward, y_forward).get_ux() * (1/ (1 + std::exp(-25 *(current_time - 0.2))));
+  double uy_wall = lattice.get_node(x_forward, y_forward).get_uy() * (1/ (1 + std::exp(-25 *(current_time - 0.2))));
 
   // check if the node in the backward direction is a fluid or boundary node
   if(!bounce_back_dir[bb_indexes[i]])
@@ -170,8 +171,9 @@ Node::apply_BB(const Lattice &lattice, unsigned int i)
   // Simple Bounce-Back
   unsigned int x_forward = coord[0] + coeff[i][0];
   unsigned int y_forward = coord[1] + coeff[i][1];
-  double ux_wall = lattice.get_node(x_forward, y_forward).get_ux();
-  double uy_wall = lattice.get_node(x_forward, y_forward).get_uy();
+  double current_time = lattice.get_time();
+  double ux_wall = lattice.get_node(x_forward, y_forward).get_ux() * (1/ (1 + std::exp(-25 *(current_time - 0.2))));
+  double uy_wall = lattice.get_node(x_forward, y_forward).get_uy() * (1/ (1 + std::exp(-25 *(current_time - 0.2))));
   
   // check if the node in the backward direction is a fluid or boundary node
   if(!bounce_back_dir[bb_indexes[i]])

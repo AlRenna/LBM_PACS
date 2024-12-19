@@ -1,18 +1,18 @@
 {
     "image_path": "../../images/lid_driven_high_res.png",
     "lattice": {
-        "Length": 1.0,
         "nx": 200,
-        "ny": 200,
-        "nu": 0.1
+        "ny": 200
     },
     "time": {
         "T_final": 10.0,
         "save_time": 0.5
     },
     "test_info": {
+        "Length": 1.0,
         "velocity": 0.5,
-        "rho": 1.0
+        "rho": 1.0,
+        "nu": 0.1
     },
     "generated_variables":{
         

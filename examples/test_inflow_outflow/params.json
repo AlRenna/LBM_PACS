@@ -1,18 +1,18 @@
 {
     "image_path": "../../images/simple_in_out_high_res.png",
     "lattice": {
-        "Length": 1.0,
         "nx": 130,
-        "ny": 130,
-        "nu": 0.1
+        "ny": 130
     },
     "time": {
         "T_final": 4.0,
         "save_time": 0.1
     },
     "test_info": {
+        "Length": 1.0,
         "velocity": 0.1,
-        "rho": 1.0
+        "rho": 1.0,
+        "nu": 0.1
     },
     "generated_variables":{
         
