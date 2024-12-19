@@ -11,7 +11,7 @@
         "save_time": 0.1
     },
     "test_info": {
-        "u_in": 0.1,
+        "velocity": 0.1,
         "rho": 1.0
     },
     "generated_variables":{

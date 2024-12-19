@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     nlohmann::json params;
     params_file >> params;
     params_file.close();
-    double u_in = params["test_info"]["u_in"];    
+    double u_in = params["test_info"]["velocity"];    
     double rho_fluid = params["test_info"]["rho"];
 
     // Path to the python script to preprocess the image and classify the nodes
