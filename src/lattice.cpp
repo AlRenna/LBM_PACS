@@ -39,6 +39,11 @@ Lattice::Lattice()
   T_final = param_json["time"]["T_final"];
   save_time = param_json["time"]["save_time"];
 
+  // Parameters used for the conversion from lattice to physical units
+  // dt, dx 
+  Cx = param_json["generated_variables"]["dx"];
+  Crho = param_json["test_info"]["rho"];
+
   save_iter = static_cast<unsigned int>(std::ceil(save_time / dt));
   
   // Cs = 1/sqrt(3) * delta_x / delta_t = dx/dt; 
@@ -220,8 +225,7 @@ Lattice::run_cpu()
   
 
   // Save the initial conditions
-  writeResults(u_file, ux_file, uy_file, rho_file, ux_out, uy_out, rho_out, nx, ny);
-  //writeResults(iter);
+  writeResults(u_file, ux_file, uy_file, rho_file, ux_out, uy_out, rho_out, nx, ny, Cx, dt, Crho);
 
   iter = iter + 1;
   
@@ -279,7 +283,7 @@ Lattice::run_cpu()
 
     if( iter%save_iter == 0 || iter == max_iter-1)
     {
-      writeResults(u_file, ux_file, uy_file, rho_file, ux_out, uy_out, rho_out, nx, ny);
+      writeResults(u_file, ux_file, uy_file, rho_file, ux_out, uy_out, rho_out, nx, ny, Cx, dt, Crho);
     }
     
     iter = iter + 1;
@@ -290,18 +294,20 @@ Lattice::run_cpu()
   // Save the lift and drag results
   if(obstacle_present)
   { 
+    // Conversion factor for forces - Cf = Crho * (Cx^4) / (Ct^2)
+    double Cf = Crho * (Cx * Cx * Cx * Cx) / (dt * dt);
     std::string lift_drag_filename = "output_results/lift_&_drag.txt";
     std::ofstream lift_drag_file(lift_drag_filename);
     lift_drag_file << "Lift:\n";
     // Save the lift and drag
     for(unsigned int t=0; t<max_iter; ++t){
-      lift_drag_file << lift_out[t] << " ";
+      lift_drag_file << lift_out[t] * Cf << " ";
     }
     
     lift_drag_file << "\nDrag:\n";
     // Save the lift and drag
     for(unsigned int t=0; t<max_iter; ++t){
-      lift_drag_file << drag_out[t] << " ";
+      lift_drag_file << drag_out[t] * Cf << " ";
     }
     lift_drag_file.close();
   }
@@ -325,6 +331,6 @@ Lattice::run_cpu()
 void
 Lattice::run_gpu()
 {
-  lbm_gpu::cuda_simulation(nx, ny, nodes, tau, dt, save_iter, max_iter);
+  lbm_gpu::cuda_simulation(nx, ny, nodes, tau, dt, Cx, Crho, save_iter, max_iter);
 }
 #endif

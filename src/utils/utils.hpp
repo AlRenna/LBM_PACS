@@ -37,7 +37,7 @@
  */
 void writeResults(std::ofstream &file_u, std::ofstream &file_ux, std::ofstream &file_uy, std::ofstream &file_rho, 
                   const std::vector<double>& ux_out, const std::vector<double>& uy_out, const std::vector<double>& rho_out, 
-                  unsigned int nx, unsigned int ny);
+                  unsigned int nx, unsigned int ny, double Cx, double Ct, double Crho);
 
 
 /**

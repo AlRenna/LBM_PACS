@@ -282,6 +282,8 @@ lbm_gpu::cuda_simulation(unsigned int nx,
                         std::vector<Node> &nodes,
                         double tau,
                         double dt,
+                        double Cx,
+                        double Crho,
                         unsigned int save_iter,
                         unsigned int max_iter)
 {
@@ -459,7 +461,7 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   vec_uy = arrayToVector(host_uy, nx * ny);
   vec_rho = arrayToVector(host_rho, nx * ny);
   // Save the initial conditions
-  writeResults(u_file, ux_file, uy_file, rho_file, vec_ux, vec_uy, vec_rho, nx, ny);
+  writeResults(u_file, ux_file, uy_file, rho_file, vec_ux, vec_uy, vec_rho, nx, ny, Cx, dt, Crho);
 
   iter = iter + 1;
 
@@ -478,7 +480,6 @@ lbm_gpu::cuda_simulation(unsigned int nx,
       std::cout << "Iteration: " << iter << std::endl;
       std::cout << "Time: " << iter * dt << std::endl;
       std::cout << "Collision and streaming" << std::endl;
-      std::cout << current_time << std::endl;
     }
 
     // Define block size (number of threads per block)
@@ -534,7 +535,7 @@ lbm_gpu::cuda_simulation(unsigned int nx,
       vec_uy = arrayToVector(host_uy, nx * ny);
       vec_rho = arrayToVector(host_rho, nx * ny);
 
-      writeResults(u_file, ux_file, uy_file, rho_file, vec_ux, vec_uy, vec_rho, nx, ny);
+      writeResults(u_file, ux_file, uy_file, rho_file, vec_ux, vec_uy, vec_rho, nx, ny, Cx, dt, Crho);
     }
 
     iter = iter + 1;
@@ -545,6 +546,8 @@ lbm_gpu::cuda_simulation(unsigned int nx,
   // Save the lift and drag results
   if(obstacle_present)
   { 
+    // Conversion factor for forces - Cf = Crho * (Cx^4) / (Ct^2)
+    double Cf = Crho * (Cx * Cx * Cx * Cx) / (dt * dt);
     lift_out = arrayToVector(lift_array, max_iter);
     drag_out = arrayToVector(drag_array, max_iter);
     std::string lift_drag_filename = "output_results/lift_&_drag.txt";
@@ -552,13 +555,13 @@ lbm_gpu::cuda_simulation(unsigned int nx,
     lift_drag_file << "Lift:\n";
     // Save the lift and drag
     for(unsigned int t=0; t<max_iter; ++t){
-      lift_drag_file << lift_out[t] << " ";
+      lift_drag_file << lift_out[t] * Cf << " ";
     }
     
     lift_drag_file << "\nDrag:\n";
     // Save the lift and drag
     for(unsigned int t=0; t<max_iter; ++t){
-      lift_drag_file << drag_out[t] << " ";
+      lift_drag_file << drag_out[t] * Cf << " ";
     }
     lift_drag_file.close();
   }

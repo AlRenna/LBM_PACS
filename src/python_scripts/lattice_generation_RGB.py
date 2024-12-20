@@ -64,6 +64,7 @@ def adapt_nx_ny(image_path, nx, ny):
     params["generated_variables"]['lattice_velocity'] = lattice_velocity
     params["generated_variables"]['lattice_nu'] = lattice_nu
     params["generated_variables"]['lattice_rho'] = lattice_rho
+    params["generated_variables"]['dx'] = Cx
 
     iterations = int(np.ceil(params["time"]['T_final'] / Ct))
     params["generated_variables"]['dt'] = Ct

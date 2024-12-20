@@ -204,8 +204,9 @@ class Lattice
 
     /// Viscosity
     double nu; //= 1.0/6.0; 
-    // Relaxation time
+    /// Relaxation time
     double tau; //= 3.0*nu+0.5;
+
     /// @}
 
     /// @name Time parameters
@@ -228,6 +229,17 @@ class Lattice
     
     /// Maximum number of time steps
     unsigned int max_iter;
+    /// @}
+
+    /// @name Conversion variables 
+    /// @{
+
+    /// Conversion factor from lattice space units to physical units
+    double Cx;
+
+    /// Conversion factor from lattice density units to physical units
+    double Crho;
+
     /// @}
     
 };

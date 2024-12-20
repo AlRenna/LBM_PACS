@@ -23,6 +23,8 @@ namespace lbm_gpu
                       std::vector<Node> &nodes, // Changed from std::vector<NodeType> to std::vector<Node>
                       double tau,
                       double dt,
+                      double Cx,
+                      double Crho,
                       unsigned int save_iter,
                       unsigned int max_iter);
 } //
