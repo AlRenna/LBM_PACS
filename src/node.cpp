@@ -243,7 +243,7 @@ Node::update_f()
 void
 Node::compute_physical_quantities()
 {
-  // compute rho and U usign the equilibrium distribution
+  // compute rho and U using the equilibrium distribution
   double rho_ = 0.0;
   for (unsigned int i = 0; i < dir; ++i)
   {

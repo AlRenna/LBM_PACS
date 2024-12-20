@@ -7,11 +7,10 @@
 
 #include "src/lattice_gpu.cuh"
 
-// __global__ void hello(void)
-// {
-//   printf("Hello from block %d, thread %d\n", blockIdx.x, threadIdx.x);
-// }
-
+/**
+ * @brief Macro to check CUDA errors
+ * 
+ */
 #define CUDA_CHECK(call) \
   do { \
     cudaError_t err = call; \
@@ -22,7 +21,10 @@
     } \
   } while (0)
 
-
+/**
+ * @brief Device function to compute the equilibrium distribution
+ * 
+ */
 __device__ double compute_equilibrium(const double *d_weights, const double *d_coeff,
                                       double rho, double ux, double uy, int i)
 {
@@ -34,6 +36,10 @@ __device__ double compute_equilibrium(const double *d_weights, const double *d_c
   return weight * rho * (1.0 + 3.0 * u_dot_c + 4.5 * u_dot_c * u_dot_c - 1.5 * u_sq);
 }
 
+/**
+ * @brief Device function to find the index of the node in the forward direction with respect to the current node
+ * 
+ */
 __device__ int find_forward_index(int current_index, int nx, int ny, int i, const double *d_coeff)
 {
   int x = current_index % nx;
@@ -45,6 +51,11 @@ __device__ int find_forward_index(int current_index, int nx, int ny, int i, cons
   return y_new * nx + x_new;
 }
 
+/**
+ * @brief Device function to apply the Interpolated Bounce-Back boundary condition
+ * 
+ * @see Node::apply_IBB
+ */
 __device__ void apply_IBB(const int dir, const double *d_weights, const double *d_coeff, const int *d_bb_indexes, double current_time,
                           double *d_f_post, double *d_f_adj,
                           double *d_ux, double *d_uy, double *d_rho,
@@ -76,6 +87,11 @@ __device__ void apply_IBB(const int dir, const double *d_weights, const double *
   }
 }
 
+/**
+ * @brief Device function to apply the Simple Bounce-Back boundary condition
+ * 
+ * @see Node::apply_BB
+ */
 __device__ void apply_BB(const int dir, const double *d_weights, const double *d_coeff, const int *d_bb_indexes, double current_time,
                           double *d_f_post, double *d_f_adj,
                           double *d_ux, double *d_uy, bool * d_bounce_back_dir,
@@ -100,6 +116,11 @@ __device__ void apply_BB(const int dir, const double *d_weights, const double *d
   }
 }
 
+/**
+ * @brief Device function to apply the Zou-He boundary condition
+ * 
+ * @see Node::apply_ZouHe
+ */
 __device__ void apply_ZouHe(const int dir, const double *d_coeff, double *d_f_adj,
                            double *d_rho, ZouHeType * d_zou_he_types,
                           int nx, int ny, int index)
@@ -152,6 +173,12 @@ __device__ void apply_ZouHe(const int dir, const double *d_coeff, double *d_f_ad
 
 }
 
+/**
+ * @brief CUDA kernel to perform the collision and streaming steps
+ * 
+ * @see Node::collide
+ * @see Node::stream 
+ */
 __global__ void collide_and_stream_kernel(
   const int dir, const double *d_weights, const double *d_coeff, const int *d_bb_indexes,
   double *d_f_pre, double *d_f_post, double *d_f_adj, 
@@ -184,6 +211,15 @@ __global__ void collide_and_stream_kernel(
   }
 }
 
+/**
+ * @brief CUDA kernel to apply boundary conditions and compute physical quantities
+ * 
+ * @see Node::apply_BCs
+ * @see Node::compute_drag_and_lift
+ * @see Node::update_f
+ * @see Node::compute_physical_quantities
+ * 
+ */
 __global__ void apply_BCs_and_compute_quantities_kernel(
   const int dir, const double *d_weights, const double *d_coeff, const int *d_bb_indexes, double current_time,
   double *d_f_pre, double *d_f_post, double *d_f_adj,

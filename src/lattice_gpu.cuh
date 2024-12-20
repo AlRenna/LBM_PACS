@@ -18,6 +18,13 @@
 
 namespace lbm_gpu
 {
+  /**
+   * @brief Function to simulate the Lattice Boltzmann Method on the GPU.
+   * 
+   * @see lattice::run
+   * @see lattice::run_gpu
+   * 
+   */
   void cuda_simulation(unsigned int nx, 
                       unsigned int ny,
                       std::vector<Node> &nodes, // Changed from std::vector<NodeType> to std::vector<Node>

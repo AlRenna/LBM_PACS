@@ -75,7 +75,7 @@ class Lattice
     /**
      * @brief Call the run (with parallelization on CPU or GPU) function to start the simulation.
      * 
-     * @param argv if the first argument is "-gpu" the simulation is run on the GPU, otherwise on the CPU.
+     * If the first argument is "-gpu" the simulation is run on the GPU, otherwise on the CPU.
      */
     void run(int argc, char **argv);
 

@@ -34,6 +34,9 @@
  * @param rho_out Vector containing density
  * @param nx Number of nodes in x-direction
  * @param ny Number of nodes in y-direction
+ * @param Cx Spatial conversion factor
+ * @param Ct Time conversion factor
+ * @param Crho Density conversion factor
  */
 void writeResults(std::ofstream &file_u, std::ofstream &file_ux, std::ofstream &file_uy, std::ofstream &file_rho, 
                   const std::vector<double>& ux_out, const std::vector<double>& uy_out, const std::vector<double>& rho_out, 

@@ -3,8 +3,12 @@
 
 ## SETUP
 ### Required packages
+- OpenMp
 - ffmpeg 
 - 
+### Optional packages
+- CUDA Toolkit (12.6)
+- doxygen
 
 ### Create the environment
 Once you run the following commands a python environment with all of its dependencies will be installed. Remember to always have your environment activated.

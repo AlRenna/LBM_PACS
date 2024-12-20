@@ -14,6 +14,16 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
+/**
+ * @brief Test example for an inflow-outflow simulation.
+ * 
+ * - Create the lattice;
+ * - Generate the data from the chose image;
+ * - Set the initial and boundary conditions;
+ * - Run the simulation;
+ * - Postprocess the results and create the animation.
+ *  
+ */
 int main(int argc, char **argv)
 {
     // Read parameters from JSON file
