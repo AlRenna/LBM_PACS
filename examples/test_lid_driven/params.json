@@ -1,5 +1,5 @@
 {
-    "image_path": "../../images/lid_driven_high_res.png",
+    "image_path": "../../images/lid_driven.png",
     "lattice": {
         "nx": 200,
         "ny": 200

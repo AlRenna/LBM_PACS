@@ -1,5 +1,5 @@
 {
-    "image_path": "../../images/simple_in_out_high_res.png",
+    "image_path": "../../images/simple_in_out.png",
     "lattice": {
         "nx": 130,
         "ny": 130
