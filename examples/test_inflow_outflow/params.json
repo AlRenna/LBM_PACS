@@ -1,18 +1,18 @@
 {
-    "image_path": "../../images/simple_in_out.png",
+    "image_path": "../../images/channel_obs.png",
     "lattice": {
-        "nx": 130,
-        "ny": 130
+        "nx": 400,
+        "ny": 200
     },
     "time": {
-        "T_final": 4.0,
-        "save_time": 0.1
+        "T_final": 10.0,
+        "save_time": 0.5
     },
     "test_info": {
-        "Length": 1.0,
-        "velocity": 0.1,
+        "Length": 10.0,
+        "velocity": 1,
         "rho": 1.0,
-        "nu": 0.1
+        "nu": 0.01
     },
     "generated_variables":{
         

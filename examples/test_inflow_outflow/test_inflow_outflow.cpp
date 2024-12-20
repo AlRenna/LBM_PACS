@@ -26,17 +26,16 @@
  */
 int main(int argc, char **argv)
 {
+    // Path to the python script to preprocess the image and classify the nodes
+    std::string script_path = "../../src/python_scripts/lattice_generation_RGB.py";
+    std::cout << "Running python script: lattice_generation_RGB.py" << std::endl;
+    run_terminal_python(script_path);
+
     // Read parameters from JSON file
     std::ifstream params_file("params.json");
     nlohmann::json params;
     params_file >> params;
     params_file.close();
-
-
-    // Path to the python script to preprocess the image and classify the nodes
-    std::string script_path = "../../src/python_scripts/lattice_generation_RGB.py";
-    std::cout << "Running python script: lattice_generation_RGB.py" << std::endl;
-    run_terminal_python(script_path);
    
     double u_in = params["generated_variables"]["lattice_velocity"];    
     double rho_fluid = params["generated_variables"]["lattice_rho"];
