@@ -1,6 +1,5 @@
 # LBM_PACS
 
-
 ## SETUP
 ### Required packages
 - OpenMp
@@ -28,7 +27,7 @@ make
 ```
 
 ### Compile and execute an example
-Once you run the `make` command, you will have the executable inside the corresponding folder. This can be ran with different fluid dynamics parameters changing `params.json`.
+Once you run the `make` command you will find each executable inside the corresponding folder in examples.
 ```bash
 cd build/examples/chose_your_test
 ./test_executable
@@ -37,7 +36,9 @@ or
 ```bash
 ./test_executable -gpu
 ```
-To run the test with different properties modify the `params.json` file to control the simulation parameters, such as the image of the fluid dynamics environment, grid size, boundary conditions, and  viscosity. 
+To run the test with different properties modify the `params.json` file to control the simulation parameters, such as the image of the fluid dynamics environment, grid size, boundary conditions, and  viscosity.
+
+If you add the `-gpu` argument, the code will run using a GPU parallelization (If CUDA Toolkit is not installed the code will ignore this).
 
 ### Generate Code Documentation (Doxygen)
 The docs folder contains the documentation of the repository. 
