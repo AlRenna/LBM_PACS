@@ -74,7 +74,7 @@ lid_driven(double val, unsigned int nx, unsigned int ny, const std::string& file
 }
 
 std::vector<double>
-uniform_left_inlet(double val, unsigned int nx, unsigned int ny, const std::string& filename_nodes)
+left_inlet(double val, unsigned int nx, unsigned int ny, const std::string& filename_nodes)
 {
     std::vector<double> ux_in(nx*ny, 0.0);
 
@@ -112,3 +112,41 @@ uniform_left_inlet(double val, unsigned int nx, unsigned int ny, const std::stri
     return ux_in;
 }
 
+Filter::Filter() : frequency(1.0) {
+    filter_function = unitary_filter;
+}
+
+Filter::Filter(const std::string& filter_name, double arg) : frequency(arg) {
+    set_filter_function(filter_name, arg);
+}
+
+void Filter::set_filter_function(const std::string& filter_name, double arg) {
+    if (filter_name == "sigmoid") {
+        filter_function = sigmoid_filter;
+    } else if (filter_name == "sinusoidal") {
+        this->frequency = arg;
+        filter_function = [this](double value) { return sinusoidal_filter(value, this->frequency); };
+    } else {
+        filter_function = unitary_filter;
+    }
+}
+
+double Filter::apply(double value) const {
+    return filter_function(value);
+}
+
+
+/// @name User defined filter functions, must input values between [0,1] and output values between [0,1]
+///@{
+double Filter::unitary_filter(double value) {
+    return 1.0;
+}
+
+double Filter::sigmoid_filter(double value) {
+    return 1 / (1 + std::exp(-25 * (value - 0.2)));
+}
+
+double Filter::sinusoidal_filter(double value, double frequency) {
+    return 0.5 * (1 + std::sin(2 * M_PI * frequency * value ));
+}
+/// }@

@@ -51,7 +51,7 @@ int main(int argc, char **argv)
     std::vector<double> rho_in(nx*ny, rho_fluid);
 
     // Set the inlet velocity on left wall
-    ux_in = uniform_left_inlet(u_in, nx, ny, "lattice.csv");
+    ux_in = left_inlet(u_in, nx, ny, "lattice.csv");
 
     // Set the initial and boundary conditions
     lattice.initialize(ux_in, uy_in, rho_in, "lattice.csv");

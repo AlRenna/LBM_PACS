@@ -65,7 +65,18 @@ Lattice::Lattice()
   rho_out.resize(nx*ny, 1.0);
   lift_out.resize(max_iter + 1, 0.);
   drag_out.resize(max_iter + 1, 0.);
+
+  // Set default filter
+  filter = Filter();
+
+  // Try to set the desired filter function
+  if (param_json.contains("filter")) {
+    std::string filter_name = param_json["filter"]["name"];
+    double filter_arg = param_json["filter"].value("frequency", 1.0);
+    filter.set_filter_function(filter_name, filter_arg);
+  }
 }
+
 
 void
 Lattice::initialize(const std::vector<double>& ux_in_, 

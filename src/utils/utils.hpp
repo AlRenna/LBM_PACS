@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <string>
+#include <functional>
 
 #include <filesystem>
 #include <fstream>
@@ -143,16 +144,34 @@ inline std::vector<double> operator*(const std::vector<double>& vec, double scal
 std::vector<double> lid_driven(double val, unsigned int nx, unsigned int ny, const std::string& filename_nodes);
 
 /**
- * @brief Function to generate the initial velocity field for the uniform left inlet case.
+ * @brief Function to generate the initial velocity field for the left inlet case.
  * 
  * @param val u_in value
  * @param nx 
  * @param ny 
  * @param filename_nodes 
  */
-std::vector<double> uniform_left_inlet(double val, unsigned int nx, unsigned int ny, const std::string& filename_nodes);
+std::vector<double> left_inlet(double val, unsigned int nx, unsigned int ny, const std::string& filename_nodes);
 
 /// @}
 
+
+
+class Filter {
+public:
+    Filter();
+    Filter(const std::string& filter_name, double arg = 1.0);
+
+    double apply(double value) const;
+    void set_filter_function(const std::string& filter_name, double arg = 1.0);
+
+private:
+    std::function<double(double)> filter_function;
+    double frequency = 1.0;
+
+    static double unitary_filter(double value);
+    static double sigmoid_filter(double value);
+    static double sinusoidal_filter(double value, double frequency);
+};
 
 #endif // __UTILS_HPP__

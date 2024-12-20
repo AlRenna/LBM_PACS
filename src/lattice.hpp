@@ -154,8 +154,21 @@ class Lattice
      * @return Node& 
      */
     inline Node & get_node(unsigned int x, unsigned int y) { return nodes[scalar_index(x, y)]; }
+
+     /**
+     * @brief Get the Filter object for the inlet boundary condition function.
+     * 
+     * @return Filter& object
+     */
+    inline const Filter& get_filter() const {return filter;} 
     /// @}
   
+    /// @name Setters
+    /// @{
+    inline void set_filter(const std::string& filter_name, double arg = 1.0) {filter = Filter(filter_name, arg); }
+    /// @}
+
+
   private:
     /// @name Lattice variables
     /// @{
@@ -239,6 +252,8 @@ class Lattice
 
     /// Conversion factor from lattice density units to physical units
     double Crho;
+
+    Filter filter;
 
     /// @}
     
