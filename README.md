@@ -28,11 +28,14 @@ make
 ```
 
 ### Compile and execute an example
-Once you run the `make` command within a test folder you will have the executable to run the same test with different fluid dynamics parameters.
+Once you run the `make` command, you will have the executable inside the corresponding folder. This can be ran with different fluid dynamics parameters changing `params.json`.
 ```bash
 cd build/examples/chose_your_test
-make
 ./test_executable
+```
+or
+```bash
+./test_executable -gpu
 ```
 To run the test with different properties modify the `params.json` file to control the simulation parameters, such as the image of the fluid dynamics environment, grid size, boundary conditions, and  viscosity. 
 

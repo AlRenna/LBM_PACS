@@ -1,6 +1,6 @@
 
 # Build
-build/
+build*/
 
 # Visual Studio code.
 *.vscode*
