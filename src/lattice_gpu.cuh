@@ -21,8 +21,8 @@ namespace lbm_gpu
   /**
    * @brief Function to simulate the Lattice Boltzmann Method on the GPU.
    * 
-   * @see lattice::run
-   * @see lattice::run_gpu
+   * @see Lattice::run
+   * @see Lattice::run_gpu
    * 
    */
   void cuda_simulation(unsigned int nx, 
