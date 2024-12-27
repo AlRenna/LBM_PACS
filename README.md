@@ -32,13 +32,14 @@ Once you run the `make` command you will find each executable inside the corresp
 cd build/examples/chose_your_test
 ./test_executable
 ```
-or
+
+To run the test with different properties modify the `params.json` file to control the simulation parameters, such as the image of the fluid dynamics environment, grid size, boundary conditions, and  viscosity.
+
 ```bash
 ./test_executable -gpu
 ```
-To run the test with different properties modify the `params.json` file to control the simulation parameters, such as the image of the fluid dynamics environment, grid size, boundary conditions, and  viscosity.
 
-If you add the `-gpu` argument, the code will run using a GPU parallelization (If CUDA Toolkit is not installed the code will ignore this).
+If you add the `-gpu` argument, the code will run using a GPU parallelization (If CUDA Toolkit is not installed the code will ignore this and run using OpenMP parallelization).
 
 ### Generate Code Documentation (Doxygen)
 The docs folder contains the documentation of the repository. 
@@ -87,4 +88,12 @@ At the end, the `animation.py` script will elaborate the output files of the sim
 
 ## References
 
-For detailed information on the theoretical background of LBM, please refer to the resources mentioned in the docs folder.
+1. Krüger, T., Kusumaatmaja, H., Kuzmin, A., Shardt, O., Silva, G., & Viggen, E. M. (2017). The Lattice Boltzmann Method: Principles and Practice. Springer.
+
+2. Inamuro, T., Yoshino, M., & Suzuki, K. (2021). An Introduction to the Lattice Boltzmann Method. World Scientific. doi:10.1142/12375 
+
+3. Pacheco, P. S., & Malensek, M. (2020). An Introduction to Parallel Programming (2nd ed.). Morgan Kaufmann.
+
+4. Izquierdo, S., & Fueyo, N. (2008). Characteristic nonreflecting boundary conditions for open boundaries in lattice Boltzmann methods. Physical Review E, 78(4), 046707. doi:10.1103/PhysRevE.78.046707
+
+5. Inamuro, T., Yoshino, M., & Ogino, F. (1995). A non-slip boundary condition for lattice Boltzmann simulations. Physics of Fluids.
