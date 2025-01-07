@@ -53,6 +53,8 @@ Lattice::Lattice()
   // max_iter = static_cast<int>(std::ceil(T_final / dt));
   iter = 0;
   tau = 3.0 * nu + 0.5;
+  tauinv = 1.0 / tau;
+  omtauinv = 1.0 - tauinv;
   nodes.resize(nx*ny);
   node_types.resize(nx*ny, NodeType::solid);
   bounce_back_delta.resize(nx*ny, std::vector<double>(Node::dir, 0.0));

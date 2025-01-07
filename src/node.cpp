@@ -59,10 +59,8 @@ Node::init_equilibrium()
 void
 Node::collide(const Lattice &lattice)
 {
-  double tau = lattice.get_tau();
-  double dt = lattice.get_dt();
-  const double tauinv = 1./tau;   
-  const double omtauinv = 1.0-tauinv;
+  const double tauinv = lattice.get_tauinv();   
+  const double omtauinv = lattice.get_omtauinv();
   
   // Collision and streaming step: now compute and relax to equilibrium 
   // BGK collision operator

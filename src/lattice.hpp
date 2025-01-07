@@ -131,6 +131,12 @@ class Lattice
     /// Get the relaxaion time 
     inline double get_tau() const { return tau; }
 
+    /// Get the inverse relaxation time
+    inline double get_tauinv() const { return tauinv; }
+
+    /// Get the 1 - inverse relaxation time
+    inline double get_omtauinv() const { return omtauinv; }
+
     /// Get the time_step
     inline double get_dt() const { return dt; }
 
@@ -203,9 +209,13 @@ class Lattice
     /// @{
 
     /// Viscosity
-    double nu; //= 1.0/6.0; 
+    double nu;
     /// Relaxation time
-    double tau; //= 3.0*nu+0.5;
+    double tau;
+    /// Inverse relaxation time
+    double tauinv;
+    /// 1 - inverse relaxation time
+    double omtauinv;
 
     /// @}
 
