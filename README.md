@@ -214,7 +214,8 @@ The user should initialize the vectors for the velocity and density according to
 The velocity value will not be used as a constant value during a simulation, but it will be multiplied by the following function:
 $$f(t) = \frac{1}{1 + \exp(-25 \cdot (t - 0.2))},$$
 for example in the case of an inlet we would have:
-$$ v_{inlet}(t) = ConstantVelocity * f(t). $$
+
+$$v_{inlet}(t) = ConstantVelocity * f(t).$$
 
 
 ## References
