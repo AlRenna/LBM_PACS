@@ -109,7 +109,7 @@ Create a `new_test_example` folder inside `examples` and  `new_test_example.cpp`
 
 ### CMakeLists.txt
 
-```bash
+```cmake
 cmake_minimum_required(VERSION 3.10)
 
 # Collect all source files in the directory
@@ -127,7 +127,7 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/params.json DESTINATION ${CMAKE_BINARY_DIR
 
 ### params.json
 
-```bash
+```json
 "image_path": "../../images/new_test_example_image.png",
 "lattice": {
     "nx": 300,
@@ -155,7 +155,7 @@ The section genereted_variables will be filled by the code during execution and 
 The user can add more section if a more precise set up is required. In our tests, we have used velocity in test_info as the constant inlet velocity.
 
 ### new_test_example.cpp
-```bash
+```cpp
 
 #include "src/lattice.hpp"
 #include "src/utils/utils_python.hpp"
