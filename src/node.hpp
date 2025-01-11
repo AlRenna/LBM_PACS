@@ -244,12 +244,11 @@ class Node
      * 
      * 7 4 8
      */
-    // std::unique_ptr<std::vector<double>> f;
-
+    
+    /// Velocity distribution functions pre-collision
     std::unique_ptr<std::vector<double>> f_pre;
-
+    /// Velocity distribution functions post-collision
     std::unique_ptr<std::vector<double>> f_post;
-
     /// Velocity distribution functions from adjacent nodes
     std::unique_ptr<std::vector<double>> f_adj;
 
